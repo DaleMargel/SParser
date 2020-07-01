@@ -22,7 +22,7 @@ Additional Sparser features:
 Sparser.js exports 3 symbols.
 
 ### Rule
-The Rule function lets you define rules using tagged template literals. For instance, the following rule will read string, translate it to a float, then push it on to a stack.
+The Rule function lets you define rules using tagged template literals. For instance, the following `number` rule will read string, translate it to a float, then push it on to a stack.
 
 ```javascript
 	// read one or more digits
@@ -73,7 +73,7 @@ The rule syntax is a modified BNF that has been tweaked to make it easier to use
 Here are examples. Assume that `A`,`B`,`C` are rules
 
 | Example | Description |
-| ------- |----------- |
+| ------- |------------ |
 | <a..z> | matches a character from `a` to `z` inclusive |
 | <123> | matches `1` or `2` or  `3` |
 | "bob" | matches the string `bob` |
@@ -99,7 +99,7 @@ Here are examples. Assume that `A`,`B`,`C` are rules
 Refer to demos for more details.
 
 ### Why not use RegEx?
-I thought about extending RegEx, but decided not to do it. Because we are doing something fundamentally different. Many of the RegEx flags and constructs make no sense in this context. Other features are awkward or missing. Rather than hack RegEx I decided to go with BNF, which is better suited to what we are doing anyhow.
+I thought about extending RegEx, but decided not to do it. Because we are doing something fundamentally different, many of the RegEx flags and constructs make no sense in this context. Other features are awkward or missing. Rather than hack RegEx (and confuse everybody) I decided to go with BNF-esque syntax. This is simpler and is better suited to what we are doing anyhow.
 
 ### Things to keep in mind:
 - Each rule should try to consume at least one character.
