@@ -1,5 +1,5 @@
 ## Example
-The following code describes a simple calculator. It contains less than 30 lines of code!
+The following code describes a simple calculator. It contains less than 25 lines of code!
 
 Properties:
 - Solves simple equations using `+`,`-`,`*`,`/` and power `^` operations.
@@ -10,4 +10,4 @@ Properties:
 - Handles right-to-left association for `^` (power) operation, e.g. `x^y^z = x^(y^z)`
 - Allows arbitrary number of spaces between operators and numbers
 
-
+This code provides an example of how to construct your own parser.

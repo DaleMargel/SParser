@@ -2,7 +2,7 @@
 **A library that lets you to describe language handling using nothing but simple javascript**
 
 ## Why?
-Writing a compiler is hard to do. There are a lot of tools to help you do this, but most require you learn obscure script syntax then compile it using a tool. The resulting code is opaque and difficult to understand or debug.
+Writing a compiler is hard to do. There are a lot of tools to help you do this, but most require you learn obscure scripts that are not always intuitive. The resulting code is big, opaque and difficult to understand or debug.
 
 SParser takes a different tack. It starts by asking what is the minimum that a developer needs to write to describe a compiler.
 
@@ -13,9 +13,8 @@ SParser takes a different tack. It starts by asking what is the minimum that a d
 
 Additional Sparser features:
 
-- **Zero dependency:** it is single file with no external dependencies.
-- **Small:** it is less than 8k unminified and unzipped, and under 2k minimized and zipped.
-- **Hackable:** the code is simple enough understand, hack and debug as needed.
+- **Small:** it is a 7.2k zero-dependency library that minifies/zips to 1.6k.
+- **Hackable:** the code is simple enough understand and change the parts that you don't like.
 - **Powerful:** Sparser is written in (a lower level of) itself!
 
 ## Overview
@@ -30,7 +29,7 @@ This rule, read a floating point number and push it onto a stack.
 	// read one or more digits
 	const digits=rule`{<0..9>}`;
 
-	// read digits with optiona fraction, parse as float and push it to a stack
+	// read and parse float then push it to a stack
 	const number=rule`['-']${digits}['.'${digits}]`.ons(s => stak.push(parseFloat(s)) );
 ```
 The `ons()` method will provide the string that was parsed and let you run some code with it. If you do not need the string, then you can call `on()` which does not pass anything. This saves your code the overhead of having to extract the string prior to calling your handlers.
@@ -69,12 +68,10 @@ The rule syntax is a modified BNF that has been tweaked to make it easier to use
 | `!` | Not |
 | `|` | Or |
 | `&` | And |
-| `"` | Text delimiting |
-| `'` | Text delimiting |
+| `""` | Text delimiting |
+| `''` | Text delimiting |
 
-Quotes can be `"` or `'` and can be used to tag literal text, but this is not always necessary (see below).
-
-Here are examples. Assume that A,B,C are rules
+Here are examples. Assume that `A`,`B`,`C` are rules
 
 | Example | Description |
 | ------- |----------- |
@@ -82,28 +79,28 @@ Here are examples. Assume that A,B,C are rules
 | `<123>` | matches `1` or `2` or  `3` |
 | `"bob"` | matches the string `bob` |
 | `'bob'` | matches the string `bob` |
-| `A B` | matches zero or more spaces between `A` and `B` |
-| `'a'..'b'` | matches anything between (strings) `a` and `b`<br>handy for delimited comments, e.g., `/* comment */` |
+| `A B` | matches zero or more spaces/tabs between `A` and `B` |
+| `'a'..'b'` | matches anything between (strings) `a` and `b` |
 | `{A}` | matches 1 or more occurences of `A` |
-| `[A]` | matches 0 or 1 occurence of `A` |
+| `[A]` | matches 0 or 1 occurences of `A` |
 | `[{A}]` | matches 0 or more occurrences of `A` |
 | `{[A]}` | matches 0 or more occurrences of `A`; internally converted to `[{A}]` |
 | `A:3` | matches 3 occurrences of `A` |
 | `A:3..5` | matches 3 to 5 occurrences of `A` |
 | `A:3..` | matches at least 3 occurrences of `A` |
 | `A:..5` | matches up to 5 occurrences of `A` |
-| `(A)` | parenthesis sets order or operation |
+| `(A)` | parenthesis enforces order of operation |
 | `!A` | matches non-existance of `A` and never consumes it |
 | `!!A` | matches `A` but does not consume it |
 | `A|B|C` | matches one of `A` or `B` or `C` |
 | `A&B&C` | matches `A` then `B` then `C` |
 | `ABC` | matches `A` then `B` then `C`; `&`'s implied when missing |
-| `${A}` | string template literal substutution rule |
+| `${A}` | string template literal insertion of another rule |
 
 Refer to demos for more details.
 
 ### Why not use RegEx?
-I thought about this, but decided not to do it. Because we are doing something fundamentally different here, many of the RegEx flags and constructs make no sense. Other features are awkward or missing. Rather than hack RegEx I decided to go with BNF, which is better suited to what we are doing anyhow.
+I thought about extending RegEx, but decided not to do it. Because we are doing something fundamentally different here, many of the RegEx flags and constructs make no sense. Other features are awkward or missing. Rather than hack RegEx I decided to go with BNF, which is better suited to what we are doing anyhow.
 
 ### Things to keep in mind:
 - Writing parsers is inherently difficult without practice.

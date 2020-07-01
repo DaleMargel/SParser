@@ -138,9 +138,6 @@ class Result extends Rule {
 	constructor(bool){ super(); this.result=bool; }
 	match(){ return this.result }
 }
-class End extends Rule {
-	match(reader){ return reader.end() }
-}
 const max = Number.MAX_SAFE_INTEGER;
 function allof(rules){return new AllOf(rules)}
 function anyof(rules){return new AnyOf(rules)}
@@ -155,9 +152,7 @@ function match(s){return new Match(s)}
 function until(rule){return new Until(rule)}
 function not(rule){return new Not(rule)}
 function step(n=1){return new Step(n)}
-function end(){return new End()}
 function defer(){return new Defer(null)}
-function wrap(rule){return new Defer(rule)}
 function result(bool) {return new Result(bool)}
 
 let stak=[];
@@ -220,7 +215,7 @@ function getroot(){
 
 	const Paren=allof([ match('('),Any,match(')') ]);
 
-	const Not=allof([ match("!"),wrap( Ops ).on(() => 
+	const Not=allof([ match("!"),Ops.on(() => 
 		stak.push(not(stak.pop())) )]);
 
 	Ops.set(anyof([ OM,MO,Opt,Many,Paren,Not,Str ]));
@@ -243,11 +238,11 @@ function getroot(){
 		stak.push(occurs(n,n,rule)) });
 	
 	const Or=allof([ 
-		match('|'), wrap( Ops ).on(() => 
-			stak.push(anyof(stak.splice(-2))) 
+		match('|'), Ops.on(() => 
+			stak.push(anyof(stak.splice(-2)))
 		) ]);
 
-	const Join=wrap( Ops ).on(() => 
+	const Join=Ops.on(() => 
 		stak.push(allof(stak.splice(-2))) );
 
 	const And=allof([ match('&'),Join ]);
@@ -260,8 +255,8 @@ function getroot(){
 function parse(rule,text){
 	let result=false;
 	if(rule){
-		let actions = [];
-		let reader = new Reader(text);
+		const actions = [];
+		const reader = new Reader(text);
 		result = rule.match(reader, actions) && reader.end();
 		if(result) for(let action of actions) action.run();
 	}
