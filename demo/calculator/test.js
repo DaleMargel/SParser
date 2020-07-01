@@ -1,4 +1,4 @@
-const {calc} = require('./calculator');
+import {calc} from './calculator.js';
 
 function test(result,expect){
 	if (result != expect) console.log(`expected ${expect} got ${result}`)
@@ -45,7 +45,7 @@ test(calc("((1+2)*3)^2"),81);
 test(calc(" ( ( 1   + 3 - 1) * 6 / 2) ^ 2 "),81);
 test(calc("-3+(1.0000+2.25*1.0   + 4.5 / 81^0.50-0.125)*2.5  "),6.0625);
 
-// 50 chars x 20k, high complexity -> about 800ms
+// 50 chars x 20k, high complexity -> almost 900ms
 // it can be sped up by trimming unused rules in parser
 let start=Date.now();
 for(let i=0; i<20000; i++) {

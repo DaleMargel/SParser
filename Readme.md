@@ -31,9 +31,9 @@ This rule, read a floating point number and push it onto a stack.
 	const digits=rule`{<0..9>}`;
 
 	// read digits with optiona fraction, parse as float and push it to a stack
-	const number=rule`['-']${digits}[.${digits}]`.ons(s => stak.push(parseFloat(s)) );
+	const number=rule`['-']${digits}['.'${digits}]`.ons(s => stak.push(parseFloat(s)) );
 ```
-The `ons()` method will provide the string that was parsed and let you run some code with it. If you do not need the string, then you can call `onx()` which does not pass anything. This saves your code the overhead of having to extract the string prior to calling your handlers.
+The `ons()` method will provide the string that was parsed and let you run some code with it. If you do not need the string, then you can call `on()` which does not pass anything. This saves your code the overhead of having to extract the string prior to calling your handlers.
 
 ### Defer
 The `rules` function works fine until you need to use a rule before it has been defined, that is, a rule indirectly includes itself. This is a common feature of languages and one we must deal with. We use `defer` as a placeholder then set it later.
@@ -41,8 +41,8 @@ The `rules` function works fine until you need to use a rule before it has been 
 ```javascript
 	// contrived example to show how to use defer()
 	const expr = defer();
-	const brule = rule`B[${expr}]`;
-	const arule = rule`A[${brule}]`;
+	const brule = rule`'B'[${expr}]`;
+	const arule = rule`'A'[${brule}]`;
 	expr.set(arule); // ABABABA...
 ```
 
@@ -82,17 +82,14 @@ Here are examples. Assume that A,B,C are rules
 | `<123>` | matches `1` or `2` or  `3` |
 | `"bob"` | matches the string `bob` |
 | `'bob'` | matches the string `bob` |
-| `bob` | matches the string `bob`<br>cannot contain `[]{}()"'&|!` or `..` |
 | `A B` | matches zero or more spaces between `A` and `B` |
-| `A..B` | matches anything between `A` and `B`<br>handy for delimited comments, e.g., `/* comment */` |
-| `..A` | steps and matches any characters until `A` |
+| `'a'..'b'` | matches anything between (strings) `a` and `b`<br>handy for delimited comments, e.g., `/* comment */` |
 | `{A}` | matches 1 or more occurences of `A` |
 | `[A]` | matches 0 or 1 occurence of `A` |
 | `[{A}]` | matches 0 or more occurrences of `A` |
 | `{[A]}` | matches 0 or more occurrences of `A`; internally converted to `[{A}]` |
-| `A:3..5` | matches 3 to 5 occurrences of `A` |
-| `A:(3..5)` | matches 3 to 5 occurrences of `A`; easier to read |
 | `A:3` | matches 3 occurrences of `A` |
+| `A:3..5` | matches 3 to 5 occurrences of `A` |
 | `A:3..` | matches at least 3 occurrences of `A` |
 | `A:..5` | matches up to 5 occurrences of `A` |
 | `(A)` | parenthesis sets order or operation |
@@ -108,15 +105,7 @@ Refer to demos for more details.
 ### Why not use RegEx?
 I thought about this, but decided not to do it. Because we are doing something fundamentally different here, many of the RegEx flags and constructs make no sense. Other features are awkward or missing. Rather than hack RegEx I decided to go with BNF, which is better suited to what we are doing anyhow.
 
-
 ### Things to keep in mind:
 - Writing parsers is inherently difficult without practice.
 - Each rule should try to consume at least one character.
 - Debugging, speed and error handling are on my TODO: list.
-
-Notes
-- [GitHub list of parsers](https://github.com/xiaomuzhu/awesome-parser-js)
-- [GitHub js parser](https://github.com/cherow/cherow)
-- most parsers for markdown are over 2k sloc!
-- https://github.com/meriyah/meriyah
-- https://github.com/buntis/buntis
