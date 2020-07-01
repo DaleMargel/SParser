@@ -56,8 +56,6 @@ Once you have built the parse tree, you can pass it to a parser function with th
 ## Syntax
 The rule syntax is a modified BNF that has been tweaked to make it easier to use. Generally speaking:
 
-NOTE: the '|' symbol confuses the GitHub markdown parser inside of a table, even when it is properly escaped. For now the '|' symbol will be replaced with a capital 'I', which looks the same in a sans-serif font. A '*' is added to remind the reader of this fact.
-
 | Construct | Meaning |
 | --------- | ------- |
 | <> | Character set |
@@ -67,7 +65,7 @@ NOTE: the '|' symbol confuses the GitHub markdown parser inside of a table, even
 | .. | Range (or steps) |
 | : | Occurrences |
 | ! | Not |
-| I* (bar) | Or |
+| \| | Or |
 | & | And |
 | "" | Text delimiting |
 | '' | Text delimiting |
@@ -93,7 +91,7 @@ Here are examples. Assume that `A`,`B`,`C` are rules
 | (A) | parenthesis enforces order of operation |
 | !A | matches non-existance of `A` and never consumes it |
 | !!A | matches `A` but does not consume it |
-| AIBIC* (bars) | matches one of `A` or `B` or `C` |
+| A\|B\|C | matches one of `A` or `B` or `C` |
 | A&B&C | matches `A` then `B` then `C` |
 | ABC | matches `A` then `B` then `C`; `&`'s implied when missing |
 | ${A} | string template literal insertion of another rule |
