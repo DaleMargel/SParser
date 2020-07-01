@@ -6,10 +6,11 @@ Writing a compiler is hard to do. There are a lot of tools to help you do this, 
 
 SParser takes a different tack. It starts by asking what is the minimum that a developer needs to write to describe a compiler.
 
-- Rules are defined using template literals that can be nested inside of other rules.
+- Rules are created using tagged template literals that can be nested inside of other rules.
 - Rules are described using a sensible BNF-like syntax.
 - An action can be attached to a rule to fire when the rule succeeds.
-- Simplicity is favoured over speed, so the code is more easily understood. It is quite fast too!
+
+This allows the developer to write rules in a minimalistic fashion. The resulting code is light and quite fast.
 
 Additional Sparser features:
 
@@ -21,9 +22,7 @@ Additional Sparser features:
 Sparser.js exports 3 symbols.
 
 ### Rule
-The Rule function lets you define rules using string template literals. For instance, the following rule will read a string of integers.
-
-This rule, read a floating point number and push it onto a stack.
+The Rule function lets you define rules using tagged template literals. For instance, the following rule will read string, translate it to a float, then push it on to a stack.
 
 ```javascript
 	// read one or more digits
@@ -35,7 +34,7 @@ This rule, read a floating point number and push it onto a stack.
 The `ons()` method will provide the string that was parsed and let you run some code with it. If you do not need the string, then you can call `on()` which does not pass anything. This saves your code the overhead of having to extract the string prior to calling your handlers.
 
 ### Defer
-The `rules` function works fine until you need to use a rule before it has been defined, that is, a rule indirectly includes itself. This is a common feature of languages and one we must deal with. We use `defer` as a placeholder then set it later.
+The `rules` function works fine until you need to use a rule before it has been defined - that is, a rule that indirectly includes itself. Here we use `defer` as a placeholder then set it later.
 
 ```javascript
 	// contrived example to show how to use defer()
@@ -59,43 +58,43 @@ The rule syntax is a modified BNF that has been tweaked to make it easier to use
 
 | Construct | Meaning |
 | --------- | ------- |
-| `<>` | Character set |
-| `[]` | Optional |
-| `{}` | One or more |
-| `()` | Parenthesis |
-| `..` | Range (or steps) |
-| `:` | Occurrences |
-| `!` | Not |
-| `|` | Or |
-| `&` | And |
-| `""` | Text delimiting |
-| `''` | Text delimiting |
+| <> | Character set |
+| [] | Optional |
+| {} | One or more |
+| () | Parenthesis |
+| .. | Range (or steps) |
+| : | Occurrences |
+| ! | Not |
+| \| | Or |
+| & | And |
+| "" | Text delimiting |
+| '' | Text delimiting |
 
 Here are examples. Assume that `A`,`B`,`C` are rules
 
 | Example | Description |
 | ------- |----------- |
-| `<a..z>` | matches a character from `a` to `z` inclusive |
-| `<123>` | matches `1` or `2` or  `3` |
-| `"bob"` | matches the string `bob` |
-| `'bob'` | matches the string `bob` |
-| `A B` | matches zero or more spaces/tabs between `A` and `B` |
-| `'a'..'b'` | matches anything between (strings) `a` and `b` |
-| `{A}` | matches 1 or more occurences of `A` |
-| `[A]` | matches 0 or 1 occurences of `A` |
-| `[{A}]` | matches 0 or more occurrences of `A` |
-| `{[A]}` | matches 0 or more occurrences of `A`; internally converted to `[{A}]` |
-| `A:3` | matches 3 occurrences of `A` |
-| `A:3..5` | matches 3 to 5 occurrences of `A` |
-| `A:3..` | matches at least 3 occurrences of `A` |
-| `A:..5` | matches up to 5 occurrences of `A` |
-| `(A)` | parenthesis enforces order of operation |
-| `!A` | matches non-existance of `A` and never consumes it |
-| `!!A` | matches `A` but does not consume it |
-| `A|B|C` | matches one of `A` or `B` or `C` |
-| `A&B&C` | matches `A` then `B` then `C` |
-| `ABC` | matches `A` then `B` then `C`; `&`'s implied when missing |
-| `${A}` | string template literal insertion of another rule |
+| <a..z> | matches a character from `a` to `z` inclusive |
+| <123> | matches `1` or `2` or  `3` |
+| "bob" | matches the string `bob` |
+| 'bob' | matches the string `bob` |
+| A B | matches zero or more spaces/tabs between `A` and `B` |
+| 'a'..'b' | matches anything between (strings) `a` and `b` |
+| {A} | matches 1 or more occurences of `A` |
+| [A] | matches 0 or 1 occurences of `A` |
+| [{A}] | matches 0 or more occurrences of `A` |
+| {[A]} | matches 0 or more occurrences of `A`; internally converted to `[{A}]` |
+| A:3 | matches 3 occurrences of `A` |
+| A:3..5 | matches 3 to 5 occurrences of `A` |
+| A:3.. | matches at least 3 occurrences of `A` |
+| A:..5 | matches up to 5 occurrences of `A` |
+| (A) | parenthesis enforces order of operation |
+| !A | matches non-existance of `A` and never consumes it |
+| !!A | matches `A` but does not consume it |
+| A\|B\|C | matches one of `A` or `B` or `C` |
+| A&B&C | matches `A` then `B` then `C` |
+| ABC | matches `A` then `B` then `C`; `&`'s implied when missing |
+| ${A} | string template literal insertion of another rule |
 
 Refer to demos for more details.
 
@@ -103,6 +102,5 @@ Refer to demos for more details.
 I thought about extending RegEx, but decided not to do it. Because we are doing something fundamentally different here, many of the RegEx flags and constructs make no sense. Other features are awkward or missing. Rather than hack RegEx I decided to go with BNF, which is better suited to what we are doing anyhow.
 
 ### Things to keep in mind:
-- Writing parsers is inherently difficult without practice.
 - Each rule should try to consume at least one character.
-- Debugging, speed and error handling are on my TODO: list.
+- Handlers are called after all parsing has finished.

@@ -1,7 +1,8 @@
 ## Example
-The following code describes a simple calculator. It contains less than 25 lines of code!
+The code here defines a simple calculator. It is very small but complete. It provides a rich example of how you can use Sparser to build your own custom language.
 
 Properties:
+
 - Solves simple equations using `+`,`-`,`*`,`/` and power `^` operations.
 - Correctly resolves minus / negative, e.g. `1--2` gives 3, `1+-2` gives -1.
 - Applies proper order of operation, e.g. `x+y*z^w=x+(y*(z^w))`.
@@ -10,4 +11,4 @@ Properties:
 - Handles right-to-left association for `^` (power) operation, e.g. `x^y^z = x^(y^z)`
 - Allows arbitrary number of spaces between operators and numbers
 
-This code provides an example of how to construct your own parser.
+To try it out, just serve it from a local web browser.  Have fun!
