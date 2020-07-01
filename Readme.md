@@ -56,6 +56,8 @@ Once you have built the parse tree, you can pass it to a parser function with th
 ## Syntax
 The rule syntax is a modified BNF that has been tweaked to make it easier to use. Generally speaking:
 
+NOTE: the '|' symbol confuses the GitHub markdown parser inside of a table, even when it is properly escaped. For now the '|' symbol will be replaced with a capital 'I', which looks the same in a sans-serif font. A '*' is added to remind the reader of this fact.
+
 | Construct | Meaning |
 | --------- | ------- |
 | <> | Character set |
@@ -65,7 +67,7 @@ The rule syntax is a modified BNF that has been tweaked to make it easier to use
 | .. | Range (or steps) |
 | : | Occurrences |
 | ! | Not |
-| \| | Or |
+| I* (bar) | Or |
 | & | And |
 | "" | Text delimiting |
 | '' | Text delimiting |
@@ -91,7 +93,7 @@ Here are examples. Assume that `A`,`B`,`C` are rules
 | (A) | parenthesis enforces order of operation |
 | !A | matches non-existance of `A` and never consumes it |
 | !!A | matches `A` but does not consume it |
-| A\|B\|C | matches one of `A` or `B` or `C` |
+| AIBIC* (bars) | matches one of `A` or `B` or `C` |
 | A&B&C | matches `A` then `B` then `C` |
 | ABC | matches `A` then `B` then `C`; `&`'s implied when missing |
 | ${A} | string template literal insertion of another rule |
@@ -99,7 +101,7 @@ Here are examples. Assume that `A`,`B`,`C` are rules
 Refer to demos for more details.
 
 ### Why not use RegEx?
-I thought about extending RegEx, but decided not to do it. Because we are doing something fundamentally different here, many of the RegEx flags and constructs make no sense. Other features are awkward or missing. Rather than hack RegEx I decided to go with BNF, which is better suited to what we are doing anyhow.
+I thought about extending RegEx, but decided not to do it. Because we are doing something fundamentally different. Many of the RegEx flags and constructs make no sense in this context. Other features are awkward or missing. Rather than hack RegEx I decided to go with BNF, which is better suited to what we are doing anyhow.
 
 ### Things to keep in mind:
 - Each rule should try to consume at least one character.
