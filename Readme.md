@@ -22,7 +22,7 @@ Additional Sparser features:
 Sparser.js exports 3 symbols.
 
 ### Rule
-The Rule function lets you define rules using tagged template literals. For instance, the following `number` rule will read string, translate it to a float, then push it on to a stack.
+The Rule function lets you define rules using tagged template literals. For instance, the following `number` rule will read a string, translate it to a float, then push it on to a stack.
 
 ```javascript
 	// read one or more digits
@@ -58,24 +58,24 @@ The rule syntax is a modified BNF that has been tweaked to make it easier to use
 
 | Construct | Meaning |
 | --------- | ------- |
-| <> | Character set |
-| [] | Optional |
-| {} | One or more |
-| () | Parenthesis |
+| \< \> | Character set |
+| [ ] | Optional |
+| { } | One or more |
+| ( ) | Parenthesis |
 | .. | Range (or steps) |
 | : | Occurrences |
 | ! | Not |
 | \| | Or |
 | & | And |
-| "" | Text delimiting |
-| '' | Text delimiting |
+| " " | Text delimiting |
+| ' ' | Text delimiting |
 
 Here are examples. Assume that `A`,`B`,`C` are rules
 
 | Example | Description | Note |
 | ------- |------------ | ---- |
-| <a..z> | matches a character from `a` to `z` inclusive | |
-| <abc> | matches `a` or `b` or  `c` | |
+| \<a..z\> | matches a character from `a` to `z` inclusive | |
+| \<abc\> | matches `a` or `b` or  `c` | |
 | 'abc' | matches the string `abc` | [1] |
 | '' | null match | [2] |
 | A B | matches spaces/tabs between `A` and `B` | [3] |
@@ -102,9 +102,9 @@ Notes:
 | Note | Details |
 | ---- |:------- |
 | [1] | Single quotes '' and double quotes "" are both accepted but cannot be intermixed. |
-| [2] | Null matches always succeed but do not consume any characters. This makes them ideal for set up work within a rule. |
-| [3] | An empty space outside of a string is used to indicate any amount of whitespace but does not include a new line. For now, this can be changed in the SParser code. In the future, this should be configurable. |
-| [4] | This is used to capture sequences that are not known in advance. For instance `rule`'/*'..'*/'`` will capture 'C' style comments. The string passed to the action will include the terminator. Ideally the terminator could be a rule, but the performance penalty for this would be great and not justified. | 
+| [2] | Null matches always succeed but do not consume any characters. This makes them ideal for calling some logic during the parsing process, such as initialization etc. |
+| [3] | An empty space outside of a string is used to indicate any amount of whitespace but does not include a new line. For now, this can only be changed from within the SParser code. In the future, this should be configurable. |
+| [4] | The ..'' construct is used to capture sequences that are not known in advance. For instance `rule\`'/\*'..'\*/'\`` will capture 'C' style comments. The string passed to the action will include the terminator, which must be a string. Note: the string terminator is by design and needed to preserve performance. |
 | [5] | The construct `{[A]}` is technically an error (it will loop forever). Internally this is converted to the proper `[{A}]` |
 | [6] | The `!A` will fail if A exists and will pass if A does not exist. Either way, no characters are consumed. |
 | [7] | The `!!A` will pass if A exists, but because `!A` does not consume any characters, neither will `!!A`. This makes it a perfect way to check for something without actually consuming it. |
@@ -119,7 +119,7 @@ Notes:
 Refer to demos for more details.
 
 ### Why not use RegEx?
-I thought about extending RegEx, but decided not to do it. Because we are doing something fundamentally different, many of the RegEx flags and constructs make no sense in this context. Other features are awkward or missing. Rather than hack RegEx (and confuse everybody) I decided to go with BNF-esque syntax. This is simpler and is better suited to what we are doing anyhow.
+I thought about using the RegEx syntax but decided not to. This is because we are doing something fundamentally different. Many of the RegEx flags and constructs make no sense in this context. Other features are awkward or missing. Rather than hack RegEx (and confuse everybody) I decided to go with BNF-esque syntax. This is simpler and is better suited to what we are doing anyhow.
 
 ### Things to keep in mind:
 - Each rule should try to consume at least one character.
