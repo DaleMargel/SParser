@@ -104,7 +104,7 @@ Notes:
 | [1] | Single quotes '' and double quotes "" are both accepted but cannot be intermixed. |
 | [2] | Null matches always succeed but do not consume any characters. This makes them ideal for calling some logic during the parsing process, such as initialization etc. |
 | [3] | An empty space outside of a string is used to indicate any amount of whitespace but does not include a new line. For now, this can only be changed from within the SParser code. In the future, this should be configurable. |
-| [4] | The ..'' construct is used to capture sequences that are not known in advance. For instance `'/\*'..'\*/'` will capture 'C' style comments. The string passed to the action will include the terminator, which must be a string. Note: the string terminator is by design and needed to preserve performance. |
+| [4] | The ..'' construct is used to capture sequences that are not known in advance. For instance `'/*'..'*/'` will capture 'C' style comments. The string passed to the action will include the terminator, which must be a string. Note: the string terminator is by design and needed to preserve performance. |
 | [5] | The construct `{[A]}` is technically an error (it will loop forever). Internally this is converted to the proper `[{A}]` |
 | [6] | The `!A` will fail if A exists and will pass if A does not exist. Either way, no characters are consumed. |
 | [7] | The `!!A` will pass if A exists, but because `!A` does not consume any characters, neither will `!!A`. This makes it a perfect way to check for something without actually consuming it. |
