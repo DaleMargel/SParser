@@ -40,7 +40,7 @@ class ActionRule {
 class Rule {
 	match(reader, actions){ return false }
 	ons(action){ return new ActionRule(this,action) }
-	on(action){ return new ActionRule(this,action,'') }
+	on(action){  return new ActionRule(this,action,'') }
 }
 class AllOf extends Rule {
 	constructor(rules){ super(); this.rules=rules }
@@ -165,8 +165,11 @@ function getroot(){
 		stak.push(rules.shift() ));
 
 	const Space=match(' ').on(() =>
-		stak.push(zerormore(charset(' \t\n'))));
+		stak.push(zerormore(charset(' \t'))));
 	
+	const NQuote=anyof([ match("''"),match('""') ]).on(() => 
+		stak.push(result(true)));
+
 	const SQuote=allof([ 
 		match("'"),
 		until(match("'")).ons(s => stak.push(match(s))),
@@ -177,27 +180,24 @@ function getroot(){
 		until(match('"')).ons(s => stak.push(match(s))),
 		match('"') ]);
 	
-	const Quote=anyof([ SQuote,DQuote ]);
-
-	const Delim=allof([ Quote,match('..'),Quote ]).on(() => {
-		let [a,b]=stak.splice(-2);
-		stak.push(allof([ a,until(b),b ])) });
+	const Quote=anyof([ NQuote,SQuote,DQuote ]);
 	
+	const Until=allof([ match('..'),Quote ]).on(() => {
+		let a=stak.pop();
+		stak.push(allof([ until(a),a ])) });
+
 	const Char=step().ons(s => stak.push(s));
 
-	const CRange=allof([ 
-		match('<'),Char,
-		match('..'),Char,
-		match('>') ]).ons(s=> {
-			let [a,b]=stak.splice(-2);
-			stak.push(range(a,b)) });
+	const CRange=allof([ match('<'),Char,match('..'),Char,match('>') ]).ons(s=> {
+		let [a,b]=stak.splice(-2);
+		stak.push(range(a,b)) });
 	
 	const Charset=allof([
 		match('<'),
 		until(match('>')).ons(s => stak.push(charset(s)) ),
 		match('>') ]);
 
-	const Str=anyof([ Space,Hole,Delim,CRange,Charset,Quote ]);
+	const Str=anyof([ Space,Hole,Until,CRange,Charset,Quote ]);
 
 	const Ops=defer();
 	
@@ -218,7 +218,7 @@ function getroot(){
 	const Not=allof([ match("!"),Ops.on(() => 
 		stak.push(not(stak.pop())) )]);
 
-	Ops.set(anyof([ OM,MO,Opt,Many,Paren,Not,Str ]));
+	Ops.set(anyof([ Str,OM,MO,Opt,Many,Paren,Not ]));
 
 	const Int=oneormore(range('0','9')).ons(s =>
 		stak.push(parseInt(s) ));
@@ -238,9 +238,9 @@ function getroot(){
 		stak.push(occurs(n,n,rule)) });
 	
 	const Or=allof([ 
-		match('|'), Ops.on(() => 
-			stak.push(anyof(stak.splice(-2)))
-		) ]);
+		match('|'), 
+		Ops.on(() => 
+			stak.push(anyof(stak.splice(-2))) )]);
 
 	const Join=Ops.on(() => 
 		stak.push(allof(stak.splice(-2))) );

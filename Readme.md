@@ -72,29 +72,49 @@ The rule syntax is a modified BNF that has been tweaked to make it easier to use
 
 Here are examples. Assume that `A`,`B`,`C` are rules
 
-| Example | Description |
-| ------- |------------ |
-| <a..z> | matches a character from `a` to `z` inclusive |
-| <123> | matches `1` or `2` or  `3` |
-| "bob" | matches the string `bob` |
-| 'bob' | matches the string `bob` |
-| A B | matches zero or more spaces/tabs between `A` and `B` |
-| 'a'..'b' | matches anything between (strings) `a` and `b` |
-| {A} | matches 1 or more occurences of `A` |
-| [A] | matches 0 or 1 occurences of `A` |
-| [{A}] | matches 0 or more occurrences of `A` |
-| {[A]} | matches 0 or more occurrences of `A`; internally converted to `[{A}]` |
-| A:3 | matches 3 occurrences of `A` |
-| A:3..5 | matches 3 to 5 occurrences of `A` |
-| A:3.. | matches at least 3 occurrences of `A` |
-| A:..5 | matches up to 5 occurrences of `A` |
-| (A) | parenthesis enforces order of operation |
-| !A | matches non-existance of `A` and never consumes it |
-| !!A | matches `A` but does not consume it |
-| A\|B\|C | matches one of `A` or `B` or `C` |
-| A&B&C | matches `A` then `B` then `C` |
-| ABC | matches `A` then `B` then `C`; `&`'s implied when missing |
-| ${A} | string template literal insertion of another rule |
+| Example | Description | Note |
+| ------- |------------ | ---- |
+| <a..z> | matches a character from `a` to `z` inclusive | |
+| <abc> | matches `a` or `b` or  `c` | |
+| 'abc' | matches the string `abc` | [1] |
+| '' | null match | [2] |
+| A B | matches spaces/tabs between `A` and `B` | [3] |
+| ..'b' | matches anything ending in `b` | [4] |
+| {A} | matches 1 or more occurences of `A` | |
+| [A] | matches 0 or 1 occurences of `A` | |
+| [{A}] | matches 0 or more occurrences of `A` | |
+| {[A]} | matches 0 or more occurrences of `A` | [5] |
+| A:3 | matches 3 occurrences of `A` | |
+| A:3..5 | matches 3 to 5 occurrences of `A` | |
+| A:3.. | matches at least 3 occurrences of `A` | |
+| A:..5 | matches up to 5 occurrences of `A` | |
+| A:.. | matches 0 or more occurrences of `A` | |
+| (A) | parenthesis enforce order of operation | |
+| !A | matches non-existance of `A` | [6] |
+| !!A | matches `A` but does not consume it | [7] |
+| A\|B\|C | matches one of `A` or `B` or `C` | |
+| A&B&C | matches `A` then `B` then `C` | [8] |
+| ABC | matches `A` then `B` then `C` | [8] |
+| ${A} | string template literal insertion of another rule | [9] |
+
+Notes:
+
+| Note | Details |
+| ---- |:------- |
+| [1] | Single quotes '' and double quotes "" are both accepted but cannot be intermixed. |
+| [2] | Null matches always succeed but do not consume any characters. This makes them ideal for set up work within a rule. |
+| [3] | An empty space outside of a string is used to indicate any amount of whitespace but does not include a new line. For now, this can be changed in the SParser code. In the future, this should be configurable. |
+| [4] | This is used to capture sequences that are not known in advance. For instance `rule`'/*'..'*/'`` will capture 'C' style comments. The string passed to the action will include the terminator. Ideally the terminator could be a rule, but the performance penalty for this would be great and not justified. | 
+| [5] | The construct `{[A]}` is technically an error (it will loop forever). Internally this is converted to the proper `[{A}]` |
+| [6] | The `!A` will fail if A exists and will pass if A does not exist. Either way, no characters are consumed. |
+| [7] | The `!!A` will pass if A exists, but because `!A` does not consume any characters, neither will `!!A`. This makes it a perfect way to check for something without actually consuming it. |
+| [8] | The `&` are implied, so `A&B&C` is the same as `ABC` and more readable. |
+| [9] | External rules are inserted by string template literal usage `${rule}`. For now only rules are accepted. Other types will cause errors. |
+
+
+
+
+
 
 Refer to demos for more details.
 
