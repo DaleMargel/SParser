@@ -19,6 +19,13 @@ test(parse(rule`"abc" 'def'`,'abc   def')); // multi space
 test(parse(rule`"abc" 'def'`,'abc \t def')); // multi space with tabs
 test( !parse(rule`"abc" 'def'`,'abd \n def')); // not new line
 
+// test wildcards
+test(parse(rule`*`,'a'));
+test(parse(rule`**`,'ab'));
+test(parse(rule`***`,'abc'));
+test( !parse(rule`*`,'ab'));
+test( !parse(rule`**`,'a'));
+
 // test character sets
 test(parse(rule`<abc>`,'a')); // a in abc
 test(parse(rule`<abc>`,'b')); // b in abc
@@ -33,14 +40,10 @@ test(parse(rule`<a..c>`,'c')); // c in range
 test( !parse(rule`<a..c>`,'d')); // d not in range
 test( !parse(rule`<a..c>`,'abc')); // must be a single match
 
-// test string termination match
-// use this when we dont know string in advance
-test(parse(rule`..'!'`,"hello!")); // sequence ends in !
-test( !parse(rule`..'!'`,"hello")); // sequence not ends in !
-test(parse(rule`''..'!'`,"hello!")); // can use null match to start
-test( !parse(rule`'!'..''`,"!hello")); // need explicit finish
-test(parse(rule`"/*".."*/"`,"/* hello */")); // double quotes
-test(parse(rule`'/*'..'*/'`,"/* hello */")); // single quotes
+// test parsing C style comments
+// this is a construct to scan delmited text
+test(parse(rule`'/*'[{!'*/'*}]'*/'`,"/* hello world */"));
+test( !parse(rule`'/*'[{!'*/'*}]'*/'`,"/* hello world"));
 
 // test optional occurrences
 test(parse(rule`['abc']`,"")); // no occurrences ok

@@ -167,6 +167,8 @@ function getSyntax(){
 	const Space=match(' ').on(() =>
 		stak.push(zerormore(charset(' \t'))));
 	
+	const Splat=match('*').on(() => stak.push(step()) );
+
 	const NQuote=anyof([ match("''"),match('""') ]).on(() => 
 		stak.push(result(true)));
 
@@ -180,12 +182,8 @@ function getSyntax(){
 		until(match('"')).ons(s => stak.push(match(s))),
 		match('"') ]);
 	
-	const Quote=anyof([ NQuote,SQuote,DQuote ]);
+	const Quote=anyof([ NQuote,SQuote,DQuote,Splat ]);
 	
-	const Until=allof([ match('..'),Quote ]).on(() => {
-		let a=stak.pop();
-		stak.push(allof([ until(a),a ])) });
-
 	const Char=step().ons(s => stak.push(s));
 
 	const CRange=allof([ match('<'),Char,match('..'),Char,match('>') ]).ons(s=> {
@@ -197,7 +195,7 @@ function getSyntax(){
 		until(match('>')).ons(s => stak.push(charset(s)) ),
 		match('>') ]);
 
-	const Str=anyof([ Space,Hole,Until,CRange,Charset,Quote ]);
+	const Str=anyof([ Space,Hole,CRange,Charset,Quote ]);
 
 	const Ops=defer();
 	
