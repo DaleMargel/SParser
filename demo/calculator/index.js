@@ -10,7 +10,6 @@ function setElement(element){
 			let elem = ev.target;
 			let text = elem.value.split("\n")[0];
 			let result = calc(text);
-			if(result === false) result = "Cannot solve "+text;
 			elem.value = text + '\n' + result;
 		}
 	}

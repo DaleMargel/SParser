@@ -158,10 +158,10 @@ function result(bool) {return new Result(bool)}
 let stak=[];
 let rules=[];
 
-function getroot(){
+function getSyntax(){
 	const Any=defer();
 
-	const Hole=match('`').on(() => 
+	const Hole=match('${}').on(() => 
 		stak.push(rules.shift() ));
 
 	const Space=match(' ').on(() =>
@@ -253,21 +253,22 @@ function getroot(){
 	return Any;
 }
 function parse(rule,text){
-	let result=false;
-	if(rule){
-		const actions = [];
-		const reader = new Reader(text);
-		result = rule.match(reader, actions) && reader.end();
-		if(result) for(let action of actions) action.run();
-	}
+	const actions = [];
+	const reader = new Reader(text);
+	const result = rule.match(reader, actions) && reader.end();
+	if(result) for(let action of actions) action.run();
 	return result;
 }
-let root = null;
+let syntax = null;
 function rule(strings,...holes){
 	rules.splice(0);
 	rules.push(...holes);
-	if(!root) root=getroot();
-	parse(root,strings.join('`'));
+	const text=strings.join('${}');
+
+	if(!syntax) syntax=getSyntax();
+	if(!parse(syntax,text) || stak.length != 1) 
+		throw {error: "syntax", text: text}
+
 	return stak.pop();
 }
 export { rule, parse, defer };

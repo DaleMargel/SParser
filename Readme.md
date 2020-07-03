@@ -19,7 +19,7 @@ Additional Sparser features:
 - **Powerful:** Sparser is written in (a lower level of) itself!
 
 ## Overview
-Sparser.js exports 3 symbols.
+Sparser.js exports the following symbols.
 
 ### Rule
 The Rule function lets you define rules using tagged template literals. For instance, the following `number` rule will read a string, translate it to a float, then push it on to a stack.
@@ -31,7 +31,17 @@ The Rule function lets you define rules using tagged template literals. For inst
 	// read and parse float then push it to a stack
 	const number=rule`['-']${digits}['.'${digits}]`.ons(s => stak.push(parseFloat(s)) );
 ```
-The `ons()` method will provide the string that was parsed and let you run some code with it. If you do not need the string, then you can call `on()` which does not pass anything. This saves your code the overhead of having to extract the string prior to calling your handlers.
+
+When creating a rule, the construction will either return a rule or throw an exception. If a rule is badly formed, there is no point in proceeding and the developer should know this as soon as possible.
+
+```javascript
+	// this will throw an exception: {err: 'syntax' text: '['-'}${}['.'${}]'}
+	const number=rule`['-'}${digits}['.'${digits}]`;
+```
+
+Each rule is applied in an all-or-none way. If any part of a rule fails, the entire rule will quit without side effects. When a rule suceeds, it will consume the matching text and optionally store an action to be run at a later time.
+
+Actions are created by registering an arrow function with the rule. This is done by `rule.on(()=>...)` or `rule.ons(s=>..)`. The `ons()` method will provide the string that was parsed and let you run some code with it. If you do not need the string, then you can call `on()` which does not pass anything. This saves your code the overhead of having to extract the string prior to calling your handlers.
 
 ### Defer
 The `rules` function works fine until you need to use a rule before it has been defined - that is, a rule that indirectly includes itself. Here we use `defer` as a placeholder then set it later.
@@ -52,6 +62,10 @@ Once you have built the parse tree, you can pass it to a parser function with th
 	parse(expr,"ABAB"); // returns true
 	parse(expr,"ABBA"); // returns false
 ```
+
+The parse function can reasonably fail and will return true or false. There is no elaborate error reporting at this time.
+
+Internally, the parser will try to match the rule structure to the text provided. The parse is considered successful when a path through the rules can be found that consumes exactly the text provided to be parsed. For any rules that have actions, the actions are collected and executed once the parsing has successfully completed.
 
 ## Syntax
 The rule syntax is a modified BNF that has been tweaked to make it easier to use. Generally speaking:
@@ -89,7 +103,7 @@ Here are examples. Assume that `A`,`B`,`C` are rules
 | A:3.. | matches at least 3 occurrences of `A` | |
 | A:..5 | matches up to 5 occurrences of `A` | |
 | A:.. | matches 0 or more occurrences of `A` | |
-| (A) | parenthesis enforce order of operation | |
+| (A) | enforces order of operation | |
 | !A | matches non-existance of `A` | [6] |
 | !!A | matches `A` but does not consume it | [7] |
 | A\|B\|C | matches one of `A` or `B` or `C` | |
@@ -108,13 +122,8 @@ Notes:
 | [5] | The construct `{[A]}` is technically an error (it will loop forever). Internally this is converted to the proper `[{A}]` |
 | [6] | The `!A` will fail if A exists and will pass if A does not exist. Either way, no characters are consumed. |
 | [7] | The `!!A` will pass if A exists, but because `!A` does not consume any characters, neither will `!!A`. This makes it a perfect way to check for something without actually consuming it. |
-| [8] | The `&` are implied, so `A&B&C` is the same as `ABC` and more readable. |
+| [8] | The `&` symbols are implied, so `A&B&C` is the same as `ABC` but more readable. |
 | [9] | External rules are inserted by string template literal usage `${rule}`. For now only rules are accepted. Other types will cause errors. |
-
-
-
-
-
 
 Refer to demos for more details.
 
@@ -124,3 +133,4 @@ I thought about using the RegEx syntax but decided not to. This is because we ar
 ### Things to keep in mind:
 - Each rule should try to consume at least one character.
 - Handlers are called after all parsing has finished.
+- Writing a compiler can be difficult. Take your time.

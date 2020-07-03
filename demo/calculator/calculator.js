@@ -24,9 +24,5 @@ const opSub=rule` '-' ${exprMulDiv}`.on(() => h2((a,b)=>a-b) );
 const exprAddSub=rule` ${exprMulDiv}[{${opAdd}|${opSub}}] `;
 expr.set(exprAddSub);
 
-function calc(str){
-	return parse(expr,str) &&
-		stak.length == 1 &&
-		stak.pop();
-}
+function calc(str){ return parse(expr,str) && (stak.length == 1) && stak.pop() }
 export { calc };

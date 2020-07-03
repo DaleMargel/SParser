@@ -9,8 +9,6 @@ console.log("Begin test");
 // test that string sequences can be parsed
 test(parse(rule`"abc"`,'abc')); // double quotes
 test(parse(rule`'abc'`,'abc')); // single quotes
-test( !parse(rule`abc`,'abc')); // no quotes
-test( !parse(rule`"abc'`,'abc')); // mixed quotes
 test( !parse(rule`'abc'`,'def')); // wrong string
 
 // test whitespace handling
@@ -19,7 +17,7 @@ test(parse(rule`"abc" 'def'`,'abcdef')); // no space
 test(parse(rule`'abc' 'def'`,'abc def')); // one space 
 test(parse(rule`"abc" 'def'`,'abc   def')); // multi space
 test(parse(rule`"abc" 'def'`,'abc \t def')); // multi space with tabs
-test( !parse(rule`abc" 'def'`,'abd \n def')); // not new line
+test( !parse(rule`"abc" 'def'`,'abd \n def')); // not new line
 
 // test character sets
 test(parse(rule`<abc>`,'a')); // a in abc
@@ -65,8 +63,6 @@ test(parse(rule`[{'abc'}]`,'')); // 0 occurrences ok
 test(parse(rule`[{'abc'}]`,'abc')); // 1 occurrence ok 
 test(parse(rule`[{'abc'}]`,'abcabc')); // 2 occurrences ok
 test(parse(rule`[{'abc'}]`,'abcabcabc')); // 3 occurrences ok
-
-test( !parse(rule`[{'abc']}`,'abc')); // messed up brackets bad 
 
 // test not match
 test(parse(rule`!'abc'"def"`,"def")); // abc not found ok
@@ -120,8 +116,29 @@ test(parse(rule`''`,"")); // null match on nothing (single quotes) ok
 test( !parse(rule`''`,"abc")); // null match on something bad
 test(parse(rule`'''abc'`,"abc")); // null match combined with something ok
 
-// Actions...
+
 let flag="";
+
+// test some invalid rule sequences
+// these should throw an exception
+// because they are seriously wrong
+
+flag=false;
+try{ parse(rule`abc`,'abc') } // no quotes
+catch(e){flag=e.text}
+test(flag,"abc");
+
+flag=false;
+try{ parse(rule`"abc'`,'abc') } // mixed quotes
+catch(e){flag=e.text}
+test(flag,"abc");
+
+flag=false;
+try{ parse(rule`[{'abc']}`,'abc') } // messed up brackets 
+catch(e){flag=e.text}
+test(flag,"[{'abc']}");
+
+// test actions
 
 // run action 'on' embedded null match
 let rule0=rule`''`.on(()=>flag='rule0');
