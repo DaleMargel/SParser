@@ -1,5 +1,5 @@
 # **SParser.js**
-**A library that lets you to describe language handling using nothing but simple javascript**
+**A library that lets you to write a compiler with minimal mess, fuss and code.**
 
 ## Why?
 Writing a compiler is hard to do. There are a lot of tools to help you do this, but most require you learn obscure scripts that are not always intuitive. The resulting code is big, opaque and difficult to understand or debug.
@@ -68,7 +68,7 @@ The parse function can reasonably fail and will return true or false. There is n
 Internally, the parser will try to match the rule structure to the text provided. The parse is considered successful when a path through the rules can be found that consumes exactly the text provided to be parsed. For any rules that have actions, the actions are collected and executed once the parsing has successfully completed.
 
 ## Syntax
-The rule syntax is a modified BNF that has been tweaked to make it easier to use. Generally speaking:
+The rule syntax is a modified BNF that has been tweaked to make it easier to use. However, it can still get quite complicated. Generally speaking:
 
 | Construct | Meaning |
 | --------- | ------- |
@@ -85,50 +85,40 @@ The rule syntax is a modified BNF that has been tweaked to make it easier to use
 | ' ' | Text delimiting |
 | * | Any character |
 
-Here are examples. Assume that `A`,`B`,`C` are rules
+Here is how to use them:
 
-| Example | Description | Note |
-| ------- |------------ | ---- |
-| \<a..z\> | matches a character from `a` to `z` inclusive | |
-| \<abc\> | matches `a` or `b` or  `c` | |
-| 'abc' | matches the string `abc` | [1] |
-| '' | null match | [2] |
+| Example | Description | Notes |
+| ------- | ----------- | ----- |
+| \<a..z\> | match a character from `a` to `z` inclusive | |
+| \<abc\> | match `a` or `b` or  `c` | |
+| 'abc' | match the string `abc` | single and double quotes ok if not mixed |
+| '' | null match | always succeeds, consumes no input |
 | * | matches any character | |
-| A B | matches spaces/tabs between `A` and `B` | [3] |
-| {A} | matches 1 or more occurences of `A` | |
-| [A] | matches 0 or 1 occurences of `A` | |
-| [{A}] | matches 0 or more occurrences of `A` | |
-| {[A]} | matches 0 or more occurrences of `A` | [4] |
-| A:3 | matches 3 occurrences of `A` | |
-| A:3..5 | matches 3 to 5 occurrences of `A` | |
-| A:3.. | matches at least 3 occurrences of `A` | |
-| A:..5 | matches up to 5 occurrences of `A` | |
-| A:.. | matches 0 or more occurrences of `A` | |
-| (A) | enforces order of operation | |
-| !A | matches non-existance of `A` | [5] |
-| !!A | matches `A` but does not consume it | [6] |
-| A\|B\|C | matches one of `A` or `B` or `C` | |
-| A&B&C | matches `A` then `B` then `C` | [7] |
-| ABC | matches `A` then `B` then `C` | [7] |
-| ${A} | string template literal insertion of another rule | [8] |
+| A B | match spaces/tabs between `A` and `B` | 0 or more spaces and tabs matched |
+| {A} | match 1 or more occurences of `A` | |
+| [A] | match 0 or 1 occurences of `A` | |
+| [{A}] | match 0 or more occurrences of `A` | |
+| {[A]} | match 0 or more occurrences of `A` | cast to [{A}] internally |
+| A:3 | match 3 occurrences of `A` | |
+| A:3..5 | match 3 to 5 occurrences of `A` | |
+| A:3.. | match at least 3 occurrences of `A` | |
+| A:..5 | match up to 5 occurrences of `A` | |
+| A:.. | match 0 or more occurrences of `A` | |
+| (A) | enforce order of operation | |
+| !A | match non-existence of `A` | consumes no input |
+| !!A | look ahead match `A` | consumes no input |
+| A\|B\|C | match one of `A` or `B` or `C` | searched in list order, first found |
+| A&B&C | match `A` then `B` then `C` | all required|
+| ABC | match `A` then `B` then `C` | `&` symbols implied |
+| ${A} | insertion of rule | string template literal |
 
-Notes:
+Refer to demos and tests for more details.
 
-| Note | Details |
-| ---- |:------- |
-| [1] | Single quotes '' and double quotes "" are both accepted but cannot be intermixed. |
-| [2] | Null matches always succeed but do not consume any characters. This makes them ideal for calling some logic during the parsing process, such as initialization etc. |
-| [3] | An empty space outside of a string is used to indicate any amount of whitespace but does not include a new line. For now, this can only be changed from within the SParser code. In the future, this should be configurable. |
-| [4] | The construct `{[A]}` is technically an error (it will loop forever). Internally this is converted to the proper `[{A}]` |
-| [5] | The `!A` will fail if A exists and will pass if A does not exist. Either way, no characters are consumed. |
-| [6] | The `!!A` will pass if A exists, but because `!A` does not consume any characters, neither will `!!A`. This makes it a perfect way to check for something without actually consuming it. |
-| [7] | The `&` symbols are implied, so `A&B&C` is the same as `ABC` but more readable. |
-| [8] | External rules are inserted by string template literal usage `${rule}`. For now only rules are accepted. Other types will cause errors. |
+### Why not use RegEx syntax?
+I thought about using the RegEx syntax but decided not to. This is because we are doing something fundamentally different. Many of the RegEx flags and constructs make no sense here. Other features are awkward or missing. Rather than hack RegEx (and confuse everybody) I decided to go with BNF-esque syntax. This is simpler and is better suited to what we are doing anyhow. It has morphed a bit over time but still tries to remain as simple as possible.
 
-Refer to demos for more details.
-
-### Why not use RegEx?
-I thought about using the RegEx syntax but decided not to. This is because we are doing something fundamentally different. Many of the RegEx flags and constructs make no sense in this context. Other features are awkward or missing. Rather than hack RegEx (and confuse everybody) I decided to go with BNF-esque syntax. This is simpler and is better suited to what we are doing anyhow.
+### What's with the name SParser
+I am not good at names or branding. This code is a 'String Parser' that I shortened to 'SParser'. Coincidentally, the word 'sparse' can imply something small and minimal. I like that. The basic parser engine is just over 7k (min/zips to less than 2k). That is small by any measure.
 
 ### Things to keep in mind:
 - Each rule should try to consume at least one character.
