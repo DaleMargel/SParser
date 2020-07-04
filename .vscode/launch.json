@@ -24,8 +24,16 @@
 			],
 			//"program": "${workspaceFolder}/app.js",
 			"args": ["--experimental-modules", "${workspaceFolder}/demo/calculator/test.js"]
+		},
+		{
+			"name": "Test Markdown",
+			"type": "node",
+			"request": "launch",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"args": ["--experimental-modules", "${workspaceFolder}/demo/markdown/markdown.js"]
 		}
-
 
 	]
 }
