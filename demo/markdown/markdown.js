@@ -28,37 +28,47 @@ let ital2=defer();
 let bold1=defer(); 
 let bold2=defer();
 let strike=defer();
+let code=defer();
+
+let dquote=rule`'"'{!'"'*}'"'`;
+let squote=rule`"'"{!'"'*}"'"`;
+
 
 let init=rule`''`.on(()=>push(""));
 
 {
 	let step=rule`!'*'*`.on(s=>push(pop()+s));
-	let other=rule`${bold1}|${bold2}|${strike}`.on(()=>merge());
+	let other=rule`${squote}|${dquote}|${bold1}|${bold2}|${strike}|${code}`.on(()=>merge());
 	ital1.set(rule`'*'!'*'${init}{${other}|${step}}'*'`.on(()=>push(`<i>${pop()}</i>`)));
 }
 {
 	let step=rule`!'_'*`.on(s=>push(pop()+s));
-	let other=rule`${bold1}|${bold2}|${strike}`.on(()=>merge());
+	let other=rule`${squote}|${dquote}|${bold1}|${bold2}|${strike}|${code}`.on(()=>merge());
 	ital2.set(rule`'_'!'_'${init}{${other}|${step}}'_'`.on(()=>push(`<i>${pop()}</i>`)));
 }
 {
 	let step=rule`!'**'*`.on(s=>push(pop()+s));
-	let other=rule`${ital1}|${ital2}|${strike}`.on(()=>merge());
+	let other=rule`${squote}|${dquote}|${ital1}|${ital2}|${strike}|${code}`.on(()=>merge());
 	bold1.set(rule`'**'${init}{${other}|${step}}'**'`.on(()=>push(`<b>${pop()}</b>`)));
 }
 {
 	let step=rule`!'__'*`.on(s=>push(pop()+s));
-	let other=rule`${ital1}|${ital2}|${strike}`.on(()=>merge());
+	let other=rule`${ital1}|${ital2}|${strike}|${code}`.on(()=>merge());
 	bold2.set(rule`'__'${init}{${other}|${step}}'__'`.on(()=>push(`<b>${pop()}</b>`)));
 }
 {
 	let step=rule`!'~'*`.on(s=>push(pop()+s));
-	let other=rule`${bold1}|${bold2}|${ital1}|${ital2}`.on(()=>merge());
+	let other=rule`${squote}|${dquote}|${bold1}|${bold2}|${ital1}|${ital2}|${code}`.on(()=>merge());
 	strike.set(rule`'~'${init}{${other}|${step}}'~'`.on(()=>push(`<s>${pop()}</s>`)));
 }
 {
+	let step=rule`!'\`'*`.on(s=>push(pop()+s));
+	code.set(rule`'\`'${init}{${step}}'\`'`.on(()=>push(`<code>${pop()}</code>`)));
+}
+
+{
 	let step=rule`!'\n'*`.on(s=>push(pop()+s));
-	let other=rule`${bold1}|${bold2}|${ital1}|${ital2}|${strike}`.on(()=>merge());
+	let other=rule`${squote}|${dquote}|${bold1}|${bold2}|${ital1}|${ital2}|${strike}|${code}`.on(()=>merge());
 	line.set(rule`${init}{${other}|${step}}['\n']`);
 }
 
@@ -72,21 +82,21 @@ let header=defer();
 	header.set(rule`!'#######'${head}`);
 }
 
-// TODO: fix this (underline headers)
-//let head1=rule`${line}('=':3..)'='`.on(()=>push(`<h1>${pop()}</h1>`));
-//let head2=rule`${line}('-':3..)'\n'`.on(()=>push(`<h2>${pop()}</h2>`));
-//test(pars(head1,"abc\n==="),"<h1>abc</h1>");
-//test(pars(head2,"abc\n---"),"<h1>abc</h1>");
+let head1=rule`${line}('=':3..)['\n']`.on(()=>push(`<h1>${pop()}</h1>`));
+let head2=rule`${line}('-':3..)['\n']`.on(()=>push(`<h2>${pop()}</h2>`));
 
-let any=rule`${header}|${line}`
+
+let any=rule`${header}|${head1}|${head2}|${line}`
 
 test(pars(any,"abc"),"abc");
 test(pars(any,"abc\n"),"abc");
+test(pars(any,"a`b`c"),"a<code>b</code>c");
 test(pars(any,"a*b*c"),"a<i>b</i>c");
 test(pars(any,"a**b**c"),"a<b>b</b>c");
 test(pars(any,"a~b~c"),"a<s>b</s>c");
 
 test(pars(any,"**abc**"),"<b>abc</b>");
+test(pars(any,"**`abc`**"),"<b><code>abc</code></b>");
 test(pars(any,"**a*b*c**"),"<b>a<i>b</i>c</b>");
 test(pars(any,"**a_b_c**"),"<b>a<i>b</i>c</b>");
 test(pars(any,"**a~b~c**"),"<b>a<s>b</s>c</b>");
@@ -96,14 +106,16 @@ test(pars(any,"**abc*"),"*<i>abc</i>");
 test(pars(any,"**abc"),"**abc");
 
 test(pars(any,"__abc__"),"<b>abc</b>");
+test(pars(any,"__`abc`_"),"_<i><code>abc</code></i>");
 test(pars(any,"__a*b*c__"),"<b>a<i>b</i>c</b>");
 test(pars(any,"__a_b_c__"),"<b>a<i>b</i>c</b>");
 test(pars(any,"__a**b**c__"),"<b>a*<i>b</i>*c</b>");
 test(pars(any,"__a__b__c__"),"<b>a</b>b<b>c</b>");
-test(pars(any,"__abc_"),"_<i>abc</i>");
+test(pars(any,"__abc__"),"<b>abc</b>");
 test(pars(any,"__abc"),"__abc");
 
 test(pars(any,"*abc*"),"<i>abc</i>");
+test(pars(any,"*`abc`*"),"<i><code>abc</code></i>");
 test(pars(any,"*a**b**c*"),"<i>a<b>b</b>c</i>");
 test(pars(any,"*a__b__c*"),"<i>a<b>b</b>c</i>");
 test(pars(any,"*a~b~c*"),"<i>a<s>b</s>c</i>");
@@ -113,6 +125,7 @@ test(pars(any,"*abc**"),"<i>abc</i>*");
 test(pars(any,"*abc"),"*abc");
 
 test(pars(any,"_abc_"),"<i>abc</i>");
+test(pars(any,"_`abc`_"),"<i><code>abc</code></i>");
 test(pars(any,"_a**b**c_"),"<i>a<b>b</b>c</i>");
 test(pars(any,"_a__b__c_"),"<i>a<b>b</b>c</i>");
 test(pars(any,"_a~b~c_"),"<i>a<s>b</s>c</i>");
@@ -121,11 +134,26 @@ test(pars(any,"_a_b_c_"),"<i>a</i>b<i>c</i>");
 test(pars(any,"_abc__"),"<i>abc</i>_");
 
 test(pars(any,"~abc~"),"<s>abc</s>");
+test(pars(any,"~`abc`~"),"<s><code>abc</code></s>");
 test(pars(any,"~a**b**c~"),"<s>a<b>b</b>c</s>");
 test(pars(any,"~a__b__c~"),"<s>a<b>b</b>c</s>");
 test(pars(any,"~a*b*c~"),"<s>a<i>b</i>c</s>");
 test(pars(any,"~a_b_c~"),"<s>a<i>b</i>c</s>");
 test(pars(any,"~a~b~c~"),"<s>a</s>b<s>c</s>");
+
+test(pars(any,"`abc`"),"<code>abc</code>");
+test(pars(any,"`**abc**`"),"<code>**abc**</code>");
+test(pars(any,"`__abc__`"),"<code>__abc__</code>");
+test(pars(any,"`*abc*`"),"<code>*abc*</code>");
+test(pars(any,"`_abc_`"),"<code>_abc_</code>");
+test(pars(any,"`~abc~`"),"<code>~abc~</code>");
+test(pars(any,"`a`b`c`"),"<code>a</code>b<code>c</code>");
+
+// Left off here
+//test(pars(any,"'abc'"),"'abc'");
+//test(pars(any,'"abc"'),'"abc"');
+//test(pars(any,"'**abc**'"),"'**abc**'");
+
 
 test(pars(any,"# abc"),"<h1>abc</h1>");
 test(pars(any,"## abc"),"<h2>abc</h2>");
@@ -141,6 +169,9 @@ test(pars(any,"# __abc__"),"<h1><b>abc</b></h1>");
 test(pars(any,"# *abc*"),"<h1><i>abc</i></h1>");
 test(pars(any,"# _abc_"),"<h1><i>abc</i></h1>");
 test(pars(any,"# ~abc~"),"<h1><s>abc</s></h1>");
+
+test(pars(any,"abc\n===\n"),"<h1>abc</h1>");
+test(pars(any,"abc\n---\n"),"<h2>abc</h2>");
 
 console.log("End test");
 if(errs) console.log(`There were ${errs} errors`)
