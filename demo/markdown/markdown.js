@@ -89,10 +89,16 @@ let init=rule`''`.on(()=>push(""));
 	}
 	list.set(rule`${ul}|${ol}`)
 }
-
+let tabfence; {
+	let sp=rule`'  '|'\t'`;
+	let init=rule`!!${sp}`.on(()=>push("<pre><code>"));
+	let step=rule`{!'\n'*}['\n']`.on(s=>push(`${pop()}${s}`));
+	let finit=rule`''`.on(()=>push(`${pop()}</code></pre>`));
+	tabfence=rule`${init}{${sp}${step}['\n']}${finit}`;
+}
 let hr=rule`<-*_>:3..['\n']`.on(()=>push('<hr>'));
 let bquote=rule`'>' ${line}`.on(()=>push(`<blockquote>${pop()}</blockquote>`));
-let any=rule`${header}|${list}|${hr}|${bquote}|${line}`;
+let any=rule`${header}|${list}|${hr}|${bquote}|${tabfence}|${line}`;
 
 // ==============
 let errs=0;
@@ -173,6 +179,14 @@ test(pars(any,"`a`b`c`"),"<code>a</code>b<code>c</code>");
 
 test(pars(any,">abc"),"<blockquote>abc</blockquote>"); // TODO: insert p when text fixed
 test(pars(any,"> abc"),"<blockquote>abc</blockquote>");
+
+test(pars(any,"\tabc"),"<pre><code>abc</code></pre>");
+test(pars(any,"  abc"),"<pre><code>abc</code></pre>");
+test(pars(any,"\t\tabc"),"<pre><code>\tabc</code></pre>");
+test(pars(any,"\t\t\tabc"),"<pre><code>\t\tabc</code></pre>");
+test(pars(any,"   abc"),"<pre><code> abc</code></pre>");
+test(pars(any,"    abc"),"<pre><code>  abc</code></pre>");
+test(pars(any,"\tabc\n\tdef"),"<pre><code>abc\ndef</code></pre>");
 
 test(pars(any,"# abc"),"<h1>abc</h1>");
 test(pars(any,"## abc"),"<h2>abc</h2>");
