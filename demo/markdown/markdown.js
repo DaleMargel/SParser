@@ -7,11 +7,9 @@ function merge(){
 	let [a,b]=stak.splice(-2);
 	push(''+a+b);
 }
-
 function pars(rule,txt){
 	return parse(rule,txt) && stak.length==1 && stak.pop();
 }
-
 // =================
 let line=defer();
 let strike=defer();
@@ -49,9 +47,9 @@ let init=rule`''`.on(()=>push(""));
 	bold.set(rule`${b1}|${b2}`)
 }
 { // strike
-	let step=rule`!'~'*`.on(s=>push(pop()+s));
+	let step=rule`!'~~'*`.on(s=>push(pop()+s));
 	let allow=rule`${bold}|${italic}|${code}`.on(()=>merge());
-	strike.set(rule`'~'${init}{${allow}|${step}}'~'`.on(()=>push(`<s>${pop()}</s>`)));
+	strike.set(rule`'~~'${init}{${allow}|${step}}'~~'`.on(()=>push(`<s>${pop()}</s>`)));
 }
 { // code
 	let step=rule`!'\`'*`.on(s=>push(pop()+s));
@@ -74,7 +72,6 @@ let init=rule`''`.on(()=>push(""));
 }
 { // list
 	let ul; {
-		let init=rule`''`.on(()=>push(''));
 		let finit=rule`''`.on(()=>push("<ul>|"+pop()+"</ul>"));
 		let step=rule`'- '${line}`.on(()=>{
 			let [a,b]=stak.splice(-2);
@@ -83,7 +80,6 @@ let init=rule`''`.on(()=>push(""));
 		ul=rule`${init}{${step}}${finit}`;
 	}
 	let ol; {
-		let init=rule`''`.on(()=>push(''));
 		let finit=rule`''`.on(()=>push("<ol>|"+pop()+"</ol>"));
 		let step=rule`{<0..9>}'. '${line}`.on(()=>{
 			let [a,b]=stak.splice(-2);
@@ -110,13 +106,13 @@ test(pars(any,"abc\n"),"abc");
 test(pars(any,"a`b`c"),"a<code>b</code>c");
 test(pars(any,"a*b*c"),"a<i>b</i>c");
 test(pars(any,"a**b**c"),"a<b>b</b>c");
-test(pars(any,"a~b~c"),"a<s>b</s>c");
+test(pars(any,"a~~b~~c"),"a<s>b</s>c");
 
 test(pars(any,"**abc**"),"<b>abc</b>");
 test(pars(any,"**`abc`**"),"<b><code>abc</code></b>");
 test(pars(any,"**a*b*c**"),"<b>a<i>b</i>c</b>");
 test(pars(any,"**a_b_c**"),"<b>a<i>b</i>c</b>");
-test(pars(any,"**a~b~c**"),"<b>a<s>b</s>c</b>");
+test(pars(any,"**a~~b~~c**"),"<b>a<s>b</s>c</b>");
 test(pars(any,"**a**b**c**"),"<b>a</b>b<b>c</b>");
 test(pars(any,"**a__b__c**"),"<b>a_<i>b</i>_c</b>");
 test(pars(any,"**abc*"),"*<i>abc</i>");
@@ -135,7 +131,7 @@ test(pars(any,"*abc*"),"<i>abc</i>");
 test(pars(any,"*`abc`*"),"<i><code>abc</code></i>");
 test(pars(any,"*a**b**c*"),"<i>a<b>b</b>c</i>");
 test(pars(any,"*a__b__c*"),"<i>a<b>b</b>c</i>");
-test(pars(any,"*a~b~c*"),"<i>a<s>b</s>c</i>");
+test(pars(any,"*a~~b~~c*"),"<i>a<s>b</s>c</i>");
 test(pars(any,"*a*b*c*"),"<i>a</i>b<i>c</i>");
 test(pars(any,"*a_b_c*"),"<i>a_b_c</i>");
 test(pars(any,"*abc**"),"<i>abc</i>*");
@@ -145,25 +141,25 @@ test(pars(any,"_abc_"),"<i>abc</i>");
 test(pars(any,"_`abc`_"),"<i><code>abc</code></i>");
 test(pars(any,"_a**b**c_"),"<i>a<b>b</b>c</i>");
 test(pars(any,"_a__b__c_"),"<i>a<b>b</b>c</i>");
-test(pars(any,"_a~b~c_"),"<i>a<s>b</s>c</i>");
+test(pars(any,"_a~~b~~c_"),"<i>a<s>b</s>c</i>");
 test(pars(any,"_a*b*c_"),"<i>a*b*c</i>");
 test(pars(any,"_a_b_c_"),"<i>a</i>b<i>c</i>");
 test(pars(any,"_abc__"),"<i>abc</i>_");
 
-test(pars(any,"~abc~"),"<s>abc</s>");
-test(pars(any,"~`abc`~"),"<s><code>abc</code></s>");
-test(pars(any,"~a**b**c~"),"<s>a<b>b</b>c</s>");
-test(pars(any,"~a__b__c~"),"<s>a<b>b</b>c</s>");
-test(pars(any,"~a*b*c~"),"<s>a<i>b</i>c</s>");
-test(pars(any,"~a_b_c~"),"<s>a<i>b</i>c</s>");
-test(pars(any,"~a~b~c~"),"<s>a</s>b<s>c</s>");
+test(pars(any,"~~abc~~"),"<s>abc</s>");
+test(pars(any,"~~`abc`~~"),"<s><code>abc</code></s>");
+test(pars(any,"~~a**b**c~~"),"<s>a<b>b</b>c</s>");
+test(pars(any,"~~a__b__c~~"),"<s>a<b>b</b>c</s>");
+test(pars(any,"~~a*b*c~~"),"<s>a<i>b</i>c</s>");
+test(pars(any,"~~a_b_c~~"),"<s>a<i>b</i>c</s>");
+test(pars(any,"~~a~~b~~c~~"),"<s>a</s>b<s>c</s>");
 
 test(pars(any,"`abc`"),"<code>abc</code>");
 test(pars(any,"`**abc**`"),"<code>**abc**</code>");
 test(pars(any,"`__abc__`"),"<code>__abc__</code>");
 test(pars(any,"`*abc*`"),"<code>*abc*</code>");
 test(pars(any,"`_abc_`"),"<code>_abc_</code>");
-test(pars(any,"`~abc~`"),"<code>~abc~</code>");
+test(pars(any,"`~~abc~~`"),"<code>~~abc~~</code>");
 test(pars(any,"`a`b`c`"),"<code>a</code>b<code>c</code>");
 
 test(pars(any,"# abc"),"<h1>abc</h1>");
@@ -179,7 +175,7 @@ test(pars(any,"# **abc**"),"<h1><b>abc</b></h1>");
 test(pars(any,"# __abc__"),"<h1><b>abc</b></h1>");
 test(pars(any,"# *abc*"),"<h1><i>abc</i></h1>");
 test(pars(any,"# _abc_"),"<h1><i>abc</i></h1>");
-test(pars(any,"# ~abc~"),"<h1><s>abc</s></h1>");
+test(pars(any,"# ~~abc~~"),"<h1><s>abc</s></h1>");
 
 test(pars(any,"abc\n===\n"),"<h1>abc</h1>");
 test(pars(any,"abc\n---\n"),"<h2>abc</h2>");
