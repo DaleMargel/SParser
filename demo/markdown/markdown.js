@@ -19,6 +19,7 @@ let code=defer();
 let italic=defer();
 let bold=defer();
 let header=defer();
+let list=defer();
 
 let init=rule`''`.on(()=>push(""));
 { // italic
@@ -71,8 +72,28 @@ let init=rule`''`.on(()=>push(""));
 	let head2=rule`${line}('-':3..)['\n']`.on(()=>push(`<h2>${pop()}</h2>`));
 	header.set(rule`${headn}|${head1}|${head2}`);
 }
-
-let any=rule`${header}|${line}`;
+{ // list
+	let ul; {
+		let init=rule`''`.on(()=>push(''));
+		let finit=rule`''`.on(()=>push("<ul>|"+pop()+"</ul>"));
+		let step=rule`'- '${line}`.on(()=>{
+			let [a,b]=stak.splice(-2);
+			push(a+`<li>${b}</li>|`);
+		});
+		ul=rule`${init}{${step}}${finit}`;
+	}
+	let ol; {
+		let init=rule`''`.on(()=>push(''));
+		let finit=rule`''`.on(()=>push("<ol>|"+pop()+"</ol>"));
+		let step=rule`{<0..9>}'. '${line}`.on(()=>{
+			let [a,b]=stak.splice(-2);
+			push(a+`<li>${b}</li>|`);
+		});
+		ol=rule`${init}{${step}}${finit}`;
+	}
+	list.set(rule`${ul}|${ol}`)
+}
+let any=rule`${header}|${list}|${line}`;
 
 // ==============
 let errs=0;
@@ -162,6 +183,12 @@ test(pars(any,"# ~abc~"),"<h1><s>abc</s></h1>");
 
 test(pars(any,"abc\n===\n"),"<h1>abc</h1>");
 test(pars(any,"abc\n---\n"),"<h2>abc</h2>");
+
+test(pars(any,"- abc"),"<ul>|<li>abc</li>|</ul>");
+test(pars(any,"- abc\n- def"),"<ul>|<li>abc</li>|<li>def</li>|</ul>");
+test(pars(any,"1. abc"),"<ol>|<li>abc</li>|</ol>");
+test(pars(any,"1. abc\n2. def"),"<ol>|<li>abc</li>|<li>def</li>|</ol>");
+test(pars(any,"1. abc\n22345. def"),"<ol>|<li>abc</li>|<li>def</li>|</ol>");
 
 console.log("End test");
 if(errs) console.log(`There were ${errs} errors`)
