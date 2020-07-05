@@ -89,7 +89,10 @@ let init=rule`''`.on(()=>push(""));
 	}
 	list.set(rule`${ul}|${ol}`)
 }
-let any=rule`${header}|${list}|${line}`;
+
+let hr=rule`<-*_>:3..['\n']`.on(()=>push('<hr>'));
+let bquote=rule`'>' ${line}`.on(()=>push(`<blockquote>${pop()}</blockquote>`));
+let any=rule`${header}|${list}|${hr}|${bquote}|${line}`;
 
 // ==============
 let errs=0;
@@ -100,6 +103,12 @@ function test(result,expect){
 	console.log(log);
 }
 console.log("Begin test");
+
+test(pars(any,'---'),"<hr>");
+test(pars(any,'***'),"<hr>");
+test(pars(any,'___'),"<hr>");
+test(pars(any,'****'),"<hr>");
+test(pars(any,'**'),"**");
 
 test(pars(any,"abc"),"abc");
 test(pars(any,"abc\n"),"abc");
@@ -162,6 +171,9 @@ test(pars(any,"`_abc_`"),"<code>_abc_</code>");
 test(pars(any,"`~~abc~~`"),"<code>~~abc~~</code>");
 test(pars(any,"`a`b`c`"),"<code>a</code>b<code>c</code>");
 
+test(pars(any,">abc"),"<blockquote>abc</blockquote>"); // TODO: insert p when text fixed
+test(pars(any,"> abc"),"<blockquote>abc</blockquote>");
+
 test(pars(any,"# abc"),"<h1>abc</h1>");
 test(pars(any,"## abc"),"<h2>abc</h2>");
 test(pars(any,"### abc"),"<h3>abc</h3>");
@@ -188,3 +200,4 @@ test(pars(any,"1. abc\n22345. def"),"<ol>|<li>abc</li>|<li>def</li>|</ol>");
 
 console.log("End test");
 if(errs) console.log(`There were ${errs} errors`)
+else console.log('..Success')
