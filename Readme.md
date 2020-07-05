@@ -1,6 +1,8 @@
 # **SParser.js**
 **A library that lets you to write a compiler with minimal mess, fuss and code.**
 
+**NOTE** This library is complete, but I might make small changes from time to time. Use with caution (for now).
+
 ## Why?
 Writing a compiler is hard to do. There are a lot of tools to help you do this, but most require you learn obscure scripts that are not always intuitive. The resulting code is big, opaque and difficult to understand or debug.
 
@@ -85,7 +87,7 @@ The rule syntax is a modified BNF that has been tweaked to make it easier to use
 | ' ' | Text delimiting |
 | * | Any character |
 
-Here is how to use them:
+Here is how to use them (A,B,C reprent arbitrary rule expressions)
 
 | Example | Description | Notes |
 | ------- | ----------- | ----- |
@@ -99,7 +101,7 @@ Here is how to use them:
 | [A] | match 0 or 1 occurences of `A` | |
 | [{A}] | match 0 or more occurrences of `A` | |
 | {[A]} | match 0 or more occurrences of `A` | cast to [{A}] internally |
-| A:3 | match 3 occurrences of `A` | |
+| A:3 | match 3 occurrences of `A` | A is aggregate of previous rules (see note*) |
 | A:3..5 | match 3 to 5 occurrences of `A` | |
 | A:3.. | match at least 3 occurrences of `A` | |
 | A:..5 | match up to 5 occurrences of `A` | |
@@ -111,6 +113,8 @@ Here is how to use them:
 | A&B&C | match `A` then `B` then `C` | all required|
 | ABC | match `A` then `B` then `C` | `&` symbols implied |
 | ${A} | insertion of rule | string template literal |
+
+NOTE* : The parser aggregates rules left to right. The `:` operator will repeat this aggregated rule a number of times. For example `AB:3` is the equivalent of `ABABAB`. When in doubt, rely on parenthesis to set the world right, e.g., `A(B:3..4)` is the same as writing `ABBB[B]`.  To me, this is not intuitive so I plan on changing it sometime in the future. Stay tuned...
 
 Refer to demos and tests for more details.
 

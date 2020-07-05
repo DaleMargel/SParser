@@ -12,6 +12,69 @@ function pars(rule,txt){
 	return parse(rule,txt) && stak.length==1 && stak.pop();
 }
 
+// =================
+let line=defer();
+let strike=defer();
+let code=defer();
+let italic=defer();
+let bold=defer();
+let header=defer();
+
+let init=rule`''`.on(()=>push(""));
+{ // italic
+	let i1; {
+		let step=rule`!'*'*`.on(s=>push(pop()+s));
+		let allow=rule`${bold}|${strike}|${code}`.on(()=>merge());
+		i1=rule`'*'!'*'${init}{${allow}|${step}}'*'`.on(()=>push(`<i>${pop()}</i>`));
+	}
+	let i2; {
+		let step=rule`!'_'*`.on(s=>push(pop()+s));
+		let allow=rule`${bold}|${strike}|${code}`.on(()=>merge());
+		i2=rule`'_'!'_'${init}{${allow}|${step}}'_'`.on(()=>push(`<i>${pop()}</i>`));
+	}
+	italic.set(rule`${i1}|${i2}`);
+}
+{ // bold
+	let b1; {
+		let step=rule`!'**'*`.on(s=>push(pop()+s));
+		let allow=rule`${italic}|${strike}|${code}`.on(()=>merge());
+		b1=rule`'**'${init}{${allow}|${step}}'**'`.on(()=>push(`<b>${pop()}</b>`));
+	}
+	let b2; {
+		let step=rule`!'__'*`.on(s=>push(pop()+s));
+		let allow=rule`${italic}|${strike}|${code}`.on(()=>merge());
+		b2=rule`'__'${init}{${allow}|${step}}'__'`.on(()=>push(`<b>${pop()}</b>`));
+	}
+	bold.set(rule`${b1}|${b2}`)
+}
+{ // strike
+	let step=rule`!'~'*`.on(s=>push(pop()+s));
+	let allow=rule`${bold}|${italic}|${code}`.on(()=>merge());
+	strike.set(rule`'~'${init}{${allow}|${step}}'~'`.on(()=>push(`<s>${pop()}</s>`)));
+}
+{ // code
+	let step=rule`!'\`'*`.on(s=>push(pop()+s));
+	code.set(rule`'\`'${init}{${step}}'\`'`.on(()=>push(`<code>${pop()}</code>`)));
+}
+{ // line
+	let step=rule`!'\n'*`.on(s=>push(pop()+s));
+	let allow=rule`${bold}|${italic}|${strike}|${code}`.on(()=>merge());
+	line.set(rule`${init}{${allow}|${step}}['\n']`);
+}
+{ // header
+	let n=0;
+	let init=rule`''`.on(()=>n=0);
+	let step=rule`''`.on(()=>n++);
+	let head=rule`${init}((${step}'#'):1..6){' '}${line}`.on(()=>push(`<h${n}>${pop()}</h${n}>`));
+	let headn=rule`!'#######'${head}`;
+	let head1=rule`${line}('=':3..)['\n']`.on(()=>push(`<h1>${pop()}</h1>`));
+	let head2=rule`${line}('-':3..)['\n']`.on(()=>push(`<h2>${pop()}</h2>`));
+	header.set(rule`${headn}|${head1}|${head2}`);
+}
+
+let any=rule`${header}|${line}`;
+
+// ==============
 let errs=0;
 function test(result,expect){
 	let ok = expect===result;
@@ -20,73 +83,6 @@ function test(result,expect){
 	console.log(log);
 }
 console.log("Begin test");
-
-// =================
-let line=defer();
-let ital1=defer();
-let ital2=defer();
-let bold1=defer(); 
-let bold2=defer();
-let strike=defer();
-let code=defer();
-
-let dquote=rule`'"'{!'"'*}'"'`;
-let squote=rule`"'"{!'"'*}"'"`;
-
-
-let init=rule`''`.on(()=>push(""));
-
-{
-	let step=rule`!'*'*`.on(s=>push(pop()+s));
-	let other=rule`${squote}|${dquote}|${bold1}|${bold2}|${strike}|${code}`.on(()=>merge());
-	ital1.set(rule`'*'!'*'${init}{${other}|${step}}'*'`.on(()=>push(`<i>${pop()}</i>`)));
-}
-{
-	let step=rule`!'_'*`.on(s=>push(pop()+s));
-	let other=rule`${squote}|${dquote}|${bold1}|${bold2}|${strike}|${code}`.on(()=>merge());
-	ital2.set(rule`'_'!'_'${init}{${other}|${step}}'_'`.on(()=>push(`<i>${pop()}</i>`)));
-}
-{
-	let step=rule`!'**'*`.on(s=>push(pop()+s));
-	let other=rule`${squote}|${dquote}|${ital1}|${ital2}|${strike}|${code}`.on(()=>merge());
-	bold1.set(rule`'**'${init}{${other}|${step}}'**'`.on(()=>push(`<b>${pop()}</b>`)));
-}
-{
-	let step=rule`!'__'*`.on(s=>push(pop()+s));
-	let other=rule`${ital1}|${ital2}|${strike}|${code}`.on(()=>merge());
-	bold2.set(rule`'__'${init}{${other}|${step}}'__'`.on(()=>push(`<b>${pop()}</b>`)));
-}
-{
-	let step=rule`!'~'*`.on(s=>push(pop()+s));
-	let other=rule`${squote}|${dquote}|${bold1}|${bold2}|${ital1}|${ital2}|${code}`.on(()=>merge());
-	strike.set(rule`'~'${init}{${other}|${step}}'~'`.on(()=>push(`<s>${pop()}</s>`)));
-}
-{
-	let step=rule`!'\`'*`.on(s=>push(pop()+s));
-	code.set(rule`'\`'${init}{${step}}'\`'`.on(()=>push(`<code>${pop()}</code>`)));
-}
-
-{
-	let step=rule`!'\n'*`.on(s=>push(pop()+s));
-	let other=rule`${squote}|${dquote}|${bold1}|${bold2}|${ital1}|${ital2}|${strike}|${code}`.on(()=>merge());
-	line.set(rule`${init}{${other}|${step}}['\n']`);
-}
-
-let header=defer();
-{
-	let n=0;
-	let hinit=rule`''`.on(()=>n=0);
-	let step=rule`''`.on(()=>n++);
-	// TODO: fix :1..6 has lower precidence than implied &, fixed by parenthesis for now
-	let head=rule`${hinit}((${step}'#'):1..6){' '}${line}`.on(()=>push(`<h${n}>${pop()}</h${n}>`));
-	header.set(rule`!'#######'${head}`);
-}
-
-let head1=rule`${line}('=':3..)['\n']`.on(()=>push(`<h1>${pop()}</h1>`));
-let head2=rule`${line}('-':3..)['\n']`.on(()=>push(`<h2>${pop()}</h2>`));
-
-
-let any=rule`${header}|${head1}|${head2}|${line}`
 
 test(pars(any,"abc"),"abc");
 test(pars(any,"abc\n"),"abc");
@@ -148,12 +144,6 @@ test(pars(any,"`*abc*`"),"<code>*abc*</code>");
 test(pars(any,"`_abc_`"),"<code>_abc_</code>");
 test(pars(any,"`~abc~`"),"<code>~abc~</code>");
 test(pars(any,"`a`b`c`"),"<code>a</code>b<code>c</code>");
-
-// Left off here
-//test(pars(any,"'abc'"),"'abc'");
-//test(pars(any,'"abc"'),'"abc"');
-//test(pars(any,"'**abc**'"),"'**abc**'");
-
 
 test(pars(any,"# abc"),"<h1>abc</h1>");
 test(pars(any,"## abc"),"<h2>abc</h2>");
