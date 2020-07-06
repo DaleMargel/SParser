@@ -17,7 +17,6 @@ let code=defer();
 let italic=defer();
 let bold=defer();
 let header=defer();
-let list=defer();
 
 let init=rule`''`.on(()=>push(""));
 { // italic
@@ -70,7 +69,7 @@ let init=rule`''`.on(()=>push(""));
 	let head2=rule`${line}('-':3..)['\n']`.on(()=>push(`<h2>${pop()}</h2>`));
 	header.set(rule`${headn}|${head1}|${head2}`);
 }
-{ // list
+let list; { // list
 	let ul; {
 		let finit=rule`''`.on(()=>push("<ul>|"+pop()+"</ul>"));
 		let step=rule`'- '${line}`.on(()=>{
@@ -87,18 +86,28 @@ let init=rule`''`.on(()=>push(""));
 		});
 		ol=rule`${init}{${step}}${finit}`;
 	}
-	list.set(rule`${ul}|${ol}`)
+	list=rule`${ul}|${ol}`;
 }
-let tabfence; {
-	let sp=rule`'  '|'\t'`;
-	let init=rule`!!${sp}`.on(()=>push("<pre><code>"));
-	let step=rule`{!'\n'*}['\n']`.on(s=>push(`${pop()}${s}`));
-	let finit=rule`''`.on(()=>push(`${pop()}</code></pre>`));
-	tabfence=rule`${init}{${sp}${step}['\n']}${finit}`;
+let fence; {
+	let tabfence; {
+		let sp=rule`' ':4|'\t'`;
+		let init=rule`!!${sp}`.on(()=>push("<pre><code>"));
+		let step=rule`{!'\n'*}['\n']`.on(s=>push(`${pop()}${s}`));
+		let finit=rule`''`.on(()=>push(`${pop()}</code></pre>`));
+		tabfence=rule`${init}{${sp}${step}['\n']}${finit}`;
+	}
+
+	let tickfence; {
+		let init=rule`'\`':4'\n'`.on(()=>push("<pre><code>"));
+		let step=rule`{!'\n'*}'\n'`.on(s=>push(`${pop()}${s}`));
+		let finit=rule`'\`':4['\n']`.on(()=>push(`${pop()}</code></pre>`));
+		tickfence=rule`${init}{${step}['\n']}${finit}`;
+	}
+	fence=rule`${tabfence}|${tickfence}`;
 }
 let hr=rule`<-*_>:3..['\n']`.on(()=>push('<hr>'));
 let bquote=rule`'>' ${line}`.on(()=>push(`<blockquote>${pop()}</blockquote>`));
-let any=rule`${header}|${list}|${hr}|${bquote}|${tabfence}|${line}`;
+let any=rule`${header}|${list}|${hr}|${bquote}|${fence}|${line}`;
 
 // ==============
 let errs=0;
@@ -181,12 +190,15 @@ test(pars(any,">abc"),"<blockquote>abc</blockquote>"); // TODO: insert p when te
 test(pars(any,"> abc"),"<blockquote>abc</blockquote>");
 
 test(pars(any,"\tabc"),"<pre><code>abc</code></pre>");
-test(pars(any,"  abc"),"<pre><code>abc</code></pre>");
+test(pars(any,"    abc"),"<pre><code>abc</code></pre>");
 test(pars(any,"\t\tabc"),"<pre><code>\tabc</code></pre>");
 test(pars(any,"\t\t\tabc"),"<pre><code>\t\tabc</code></pre>");
-test(pars(any,"   abc"),"<pre><code> abc</code></pre>");
-test(pars(any,"    abc"),"<pre><code>  abc</code></pre>");
+test(pars(any,"     abc"),"<pre><code> abc</code></pre>");
+test(pars(any,"        abc"),"<pre><code>    abc</code></pre>");
 test(pars(any,"\tabc\n\tdef"),"<pre><code>abc\ndef</code></pre>");
+
+test(pars(any,"````\nabc\n````"),"<pre><code>abc\n</code></pre>");
+test(pars(any,"````\nabc\ndef\n````"),"<pre><code>abc\ndef\n</code></pre>");
 
 test(pars(any,"# abc"),"<h1>abc</h1>");
 test(pars(any,"## abc"),"<h2>abc</h2>");
