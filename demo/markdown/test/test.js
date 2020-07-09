@@ -151,7 +151,12 @@ test(read(any,"1. abc"),"<ol>|<li>abc</li>|</ol>");
 test(read(any,"1. abc\n2. def"),"<ol>|<li>abc</li>|<li>def</li>|</ol>");
 test(read(any,"1. abc\n22345. def"),"<ol>|<li>abc</li>|<li>def</li>|</ol>");
 
-//test(read(table),"| A | B |\n")
-console.log("End test");
+test(read(any,"| A | B |\n| --- | --- |\n| one | two |"),
+	'<table>\n<tr>\n<th class="left">A</th>\n<th class="left">B</th>\n</tr>\n<tr>\n<td class="left">one</td>\n<td class="left">two</td>\n</tr>\n</table>\n');
+
+//test(read(any,"A | B\n--- | ---\none | two"),
+//	'<table>\n<tr>\n<th class="left">A</th>\n<th class="left">B</th>\n</tr>\n<tr>\n<td class="left">one</td>\n<td class="left">two</td>\n</tr>\n</table>\n');
+
+	console.log("End test");
 if(errs) console.log(`There were ${errs} errors`)
 else console.log('..Success')

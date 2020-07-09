@@ -154,10 +154,11 @@ let table; {
 	let headers=[];
 	let justs=[];
 	let index=0;
+	let len=0;
 
 	let init=rule`''`.on(()=>{ headers=[]; justs=[]; index=0 });
 
-	let th=rule`{!<|\n>*}`.ons(s=>headers.push(s));
+	let th=rule`{!<|\n>*}`.ons(s=>headers.push(s.trim()));
 	let head=rule`['|']{${th}['|']}['\n']`;
 
 	let left=rule` [':']('-':3..) `.on(()=>justs.push('left'));
@@ -167,8 +168,9 @@ let table; {
 	let just=rule`['|']{${tu}['|']}['\n']`;
 
 	let start=rule`''`.on(()=>{
+		len=headers.length;
 		let str='<table>\n<tr>\n';
-		for(let i=0; i<headers.len; i++)
+		for(let i=0; i<len; i++)
 			str+=`<th class="${justs[i]}">${headers[i]}</th>\n`;
 		str += `</tr>\n`
 		push(str);
@@ -178,9 +180,8 @@ let table; {
 	let ntr=rule`''`.on(()=>{ push(`${pop()}</tr>\n`) });
 
 	let td=rule`{!<|\n>*}`.ons(s=>{
-		let [a,b]=stak.splice(-2);
 		let n = index++ % len;
-		push(`${a}<td class="${justs[n]}">${b}</td>\n`);
+		push(`${pop()}<td class="${justs[n]}">${s.trim()}</td>\n`);
 	});
 	let row=rule`['|']${tr}{${td}['|']}${ntr}['\n']`;
 	let finit=rule`''`.on(()=>push(`${pop()}</table>\n`));
