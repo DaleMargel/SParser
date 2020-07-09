@@ -32,7 +32,7 @@
 			"skipFiles": [
 				"<node_internals>/**"
 			],
-			"args": ["--experimental-modules", "${workspaceFolder}/demo/markdown/markdown.js"]
+			"args": ["--experimental-modules", "${workspaceFolder}/demo/markdown/test/test.js"]
 		}
 
 	]
