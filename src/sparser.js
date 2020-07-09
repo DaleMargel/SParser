@@ -264,9 +264,8 @@ function rule(strings,...holes){
 	const text=strings.join('${}');
 
 	if(!syntax) syntax=getSyntax();
-	if(!parse(syntax,text) || stak.length != 1) 
-		throw {error: "syntax", text: text}
-
+	if(!parse(syntax,text)) throw {error: "syntax", text: text}
+	if(stak.length != 1) throw {error: "semantic", text: text}
 	return stak.pop();
 }
 export { rule, parse, defer };

@@ -149,7 +149,44 @@ let fence=rule`${tabfence}|${tickfence}`;
 const bquote=rule`'>' ${line}`.on(()=>push(`<blockquote>${pop()}</blockquote>`));
 const hr=rule`<-*_>:3..['\n']`.on(()=>push('<hr>'));
 
-let blok=rule`${head}|${list}|${fence}|${bquote}|${hr}`;
+let table; {
+	let headers=[];
+	let justs=[];
+	let index=0;
+
+	let init=rule`''`.on(()=>{ headers=[]; justs=[]; index=0 });
+
+	let th=rule`{!<|\n>*}`.ons(s=>headers.push(s));
+	let head=rule`['|']{${th}['|']}['\n']`;
+
+	let left=rule` [':']('-':3..) `.on(()=>justs.push('left'));
+	let wide=rule` ':'('-':3)':'`.on(()=>justs.push('wide'));
+	let right=rule` ('-':3..)':' `.on(()=>justs.push('right'));
+	let tu=rule`${wide}|${right}|${left}`;
+	let just=rule`['|']{${tu}['|']}['\n']`;
+
+	let start=rule`''`.on(()=>{
+		let str='<table>\n<tr>\n';
+		for(let i=0; i<headers.len; i++)
+			str+=`<th class="${justs[i]}">${headers[i]}</th>\n`;
+		str += `</tr>\n`
+		push(str);
+	});
+
+	let tr=rule`''`.on(()=>{ push(`${pop()}<tr>\n`) });
+	let ntr=rule`''`.on(()=>{ push(`${pop()}</tr>\n`) });
+
+	let td=rule`{!<|\n>*}`.ons(s=>{
+		let [a,b]=stak.splice(-2);
+		let n = index++ % len;
+		push(`${a}<td class="${justs[n]}">${b}</td>\n`);
+	});
+	let row=rule`['|']${tr}{${td}['|']}${ntr}['\n']`;
+	let finit=rule`''`.on(()=>push(`${pop()}</table>\n`));
+	table=rule`${init}${head}${just}${start}{${row}}${finit}`;
+}
+
+let blok=rule`${head}|${list}|${fence}|${bquote}|${hr}|${table}`;
 const any=rule`${blok}|${line}`;
 
 // ==============
@@ -306,6 +343,7 @@ test(read(any,"1. abc"),"<ol>|<li>abc</li>|</ol>");
 test(read(any,"1. abc\n2. def"),"<ol>|<li>abc</li>|<li>def</li>|</ol>");
 test(read(any,"1. abc\n22345. def"),"<ol>|<li>abc</li>|<li>def</li>|</ol>");
 
+//test(read(table),"| A | B |\n")
 console.log("End test");
 if(errs) console.log(`There were ${errs} errors`)
 else console.log('..Success')
