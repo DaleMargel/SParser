@@ -5,15 +5,23 @@ let linkmap={};
 
 function pop(){ return stak.pop() }
 function push(x){ stak.push(x) }
-function read(rule,txt){ return parse(rule,txt) && stak.length==1 && stak.pop() }
-function setlink(link){ linkmap=link }
 
 let allow=defer();
-let init=rule`''`.on(()=>push(""));
+let init=rule`''`.on(()=>push(''));
 
 let line; {
-	const step=rule`!'\n'*`.on(s=>push(pop()+s));
-	line=rule`${init}{${allow}|${step}}['\n']`;
+	let init=rule`''`.on(()=>push(""));
+	let step=rule`!<\n\r>*`.on(s=>push(pop()+s));
+	line=rule`${init}{${allow}|${step}}['\n']`;	
+}
+// <p> element can contain italic, bold, strike, code, links and images
+// and most of these have a few variants.
+let ptag; {
+	let init=rule`''`.on(()=>push("<p>"));
+	let step=rule`!<\n\r>*`.on(s=>push(pop()+s));
+	let finit=rule`''`.on(()=>push(`${pop()}</p>\n`));
+	ptag=rule`${init}{${allow}|${step}}${finit}['\n']`;
+	//ptag=rule`${init}${line}${finit}['\n']`;
 }
 let italic1; {
 	const step=rule`!'*'*`.on(s=>push(pop()+s));
@@ -109,24 +117,24 @@ let head; {
 	let n=0;
 	const init=rule`''`.on(()=>n=0);
 	const step=rule`''`.on(()=>n++);
-	const headn=rule`${init}((${step}'#'):1..6){' '}${line}`.on(()=>push(`<h${n}>${pop()}</h${n}>`));
-	const head1=rule`${line}('=':3..)['\n']`.on(()=>push(`<h1>${pop()}</h1>`));
-	const head2=rule`${line}('-':3..)['\n']`.on(()=>push(`<h2>${pop()}</h2>`));
+	const headn=rule`${init}((${step}'#'):1..6){' '}${line}`.on(()=>push(`<h${n}>${pop()}</h${n}>\n`));
+	const head1=rule`${line}('=':3..)['\n']`.on(()=>push(`<h1>${pop()}</h1>\n`));
+	const head2=rule`${line}('-':3..)['\n']`.on(()=>push(`<h2>${pop()}</h2>\n`));
 	head=rule`${headn}|${head1}|${head2}`;
 }
 let ul; {
-	const finit=rule`''`.on(()=>push("<ul>|"+pop()+"</ul>"));
+	const finit=rule`''`.on(()=>push(`<ul>\n${pop()}</ul>\n`));
 	const step=rule`'- '${line}`.on(()=>{
 		let [a,b]=stak.splice(-2);
-		push(a+`<li>${b}</li>|`)
+		push(`${a}<li>${b}</li>\n`)
 	});
 	ul=rule`${init}{${step}}${finit}`;
 }
 let ol; {
-	const finit=rule`''`.on(()=>push("<ol>|"+pop()+"</ol>"));
+	const finit=rule`''`.on(()=>push(`<ol>\n${pop()}</ol>\n`));
 	const step=rule`{<0..9>}'. '${line}`.on(()=>{
 		let [a,b]=stak.splice(-2);
-		push(a+`<li>${b}</li>|`);
+		push(`${a}<li>${b}</li>\n`);
 	});
 	ol=rule`${init}{${step}}${finit}`;
 }
@@ -136,19 +144,19 @@ let tabfence; {
 	const sp=rule`' ':4|'\t'`;
 	const init=rule`!!${sp}`.on(()=>push("<pre><code>"));
 	const step=rule`{!'\n'*}['\n']`.on(s=>push(`${pop()}${s}`));
-	const finit=rule`''`.on(()=>push(`${pop()}</code></pre>`));
+	const finit=rule`''`.on(()=>push(`${pop()}</code></pre>\n`));
 	tabfence=rule`${init}{${sp}${step}['\n']}${finit}`;
 }
 let tickfence; {
 	const init=rule`'\`':4'\n'`.on(()=>push("<pre><code>"));
 	const step=rule`{!'\n'*}'\n'`.on(s=>push(`${pop()}${s}`));
-	const finit=rule`'\`':4['\n']`.on(()=>push(`${pop()}</code></pre>`));
+	const finit=rule`'\`':4['\n']`.on(()=>push(`${pop()}</code></pre>\n`));
 	tickfence=rule`${init}{${step}['\n']}${finit}`;
 }
 let fence=rule`${tabfence}|${tickfence}`;
 
-const bquote=rule`'>' ${line}`.on(()=>push(`<blockquote>${pop()}</blockquote>`));
-const hr=rule`<-*_>:3..['\n']`.on(()=>push('<hr>'));
+const bquote=rule`'>' ${line}`.on(()=>push(`<blockquote>${pop()}</blockquote>\n`));
+const hr=rule`<-*_>:3..['\n']`.on(()=>push('<hr>\n'));
 
 let table; {
 	let headers=[];
@@ -161,9 +169,9 @@ let table; {
 	let th=rule`{!<|\n>*}`.ons(s=>headers.push(s.trim()));
 	let head=rule`['|']{${th}['|']}['\n']`;
 
-	let left=rule` [':']('-':3..) `.on(()=>justs.push('left'));
-	let wide=rule` ':'('-':3)':'`.on(()=>justs.push('wide'));
-	let right=rule` ('-':3..)':' `.on(()=>justs.push('right'));
+	let left=rule` [':']('-':3..) `.on(()=>justs.push(''));
+	let wide=rule` ':'('-':3)':'`.on(()=>justs.push(' class="center"'));
+	let right=rule` ('-':3..)':' `.on(()=>justs.push(' class="right"'));
 	let tu=rule`${wide}|${right}|${left}`;
 	let just=rule`['|']{${tu}['|']}['\n']`;
 
@@ -171,7 +179,7 @@ let table; {
 		len=headers.length;
 		let str='<table>\n<tr>\n';
 		for(let i=0; i<len; i++)
-			str+=`<th class="${justs[i]}">${headers[i]}</th>\n`;
+			str+=`<th${justs[i]}>${headers[i]}</th>\n`;
 		str += `</tr>\n`
 		push(str);
 	});
@@ -181,7 +189,7 @@ let table; {
 
 	let td=rule`{!<|\n>*}`.ons(s=>{
 		let n = index++ % len;
-		push(`${pop()}<td class="${justs[n]}">${s.trim()}</td>\n`);
+		push(`${pop()}<td${justs[n]}>${s.trim()}</td>\n`);
 	});
 	let row=rule`['|']${tr}{${td}['|']}${ntr}['\n']`;
 	let finit=rule`''`.on(()=>push(`${pop()}</table>\n`));
@@ -189,5 +197,7 @@ let table; {
 }
 
 let blok=rule`${head}|${list}|${fence}|${bquote}|${hr}|${table}`;
-const any=rule`${blok}|${line}`;
-export { any, read, setlink, ref };
+let all=rule`${blok}|${ptag}`;
+function md(txt){ return parse(all,txt) && stak.length==1 && stak.pop() }
+
+export { md as read };
