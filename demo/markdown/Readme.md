@@ -4,7 +4,7 @@
 ## What is Markdown?
 Markdown allows you to convert simple text into html. It is very commonly used today. 
 
-Unfortunately the markdown specifications are a bit loose. GitHub has done a great service in trying to standardize its own [GitHub Flavored Markdown](https://github.github.com/gfm/) **(GFM**) which is based on the excellent [CommonMark](https://spec.commonmark.org/) specifications.
+Unfortunately the markdown specifications are a bit loose. GitHub has done a great service in trying to standardize its own [GitHub Flavored Markdown](https://github.github.com/gfm/) **(GFM**) which is based on the excellent [CommonMark](https://spec.commonmark.org/) specifications. I will try to use the GFM standards in this library.
 
 ## Why?
 There are a few reasons I wrote this:
@@ -15,14 +15,17 @@ There are a few reasons I wrote this:
 
 ## Progress
 At this point, the code is almost complete with a few features missing:
+
 - Sub lists
 - Html
 - Url
 - character escapes
+- package into user-friendly callable function
+- a snappy project name
 
-I wish to make this GFM compliant, so I need to implement the 500+ unit tests. I have already started on this but it will take time. I will implement the missing features in the process of adding the GFM tests.
+I wish to make this GFM compliant, so I need to implement the 500+ GFM unit tests. I have already started on this but it will take time. I will add the missing features while working on the GFM tests.
 
 ## Observations
-This markdown compiler is currently near it's final size so come size comparisons can be made. **Markd** is a very finely crafted markdown parser using a standard approach - and a good library to compare. At this point, this my parser is about **10%-20%** of the size of the Markd library (depending on compression). **This is a great sign**. Whether it can compete with speed remains to be seen.
+This markdown compiler is currently near it's final size so size comparisons can be made. **Markd** is a very finely crafted markdown parser using a standard approach - and a good library to compare. At this point, this my parser is about **10%-20%** of the size of the Markd library (depending on compression). **This is a great sign**. 
 
-
+Whether it can compete with speed remains to be seen.
