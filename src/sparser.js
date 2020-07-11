@@ -250,6 +250,7 @@ function getSyntax(){
 	Any.set(Bool);
 	return Any;
 }
+// parse once
 function parse(rule,text){
 	const actions = [];
 	const reader = new Reader(text);
@@ -257,15 +258,27 @@ function parse(rule,text){
 	if(result) for(let action of actions) action.run();
 	return result;
 }
+// repeately parse until end of text
+function parseAll(rule,text){
+	const reader = new Reader(text);
+	while(!reader.end()){
+		let actions = [];
+		let result = rule.match(reader, actions);
+		if(result) for(let action of actions) action.run();
+		else break;
+	}
+	return reader.end();
+}
 let syntax = null;
 function rule(strings,...holes){
 	rules.splice(0);
 	rules.push(...holes);
 	const text=strings.join('${}');
-
+	if(text=='') return result(true);
+	
 	if(!syntax) syntax=getSyntax();
 	if(!parse(syntax,text)) throw {error: "syntax", text: text}
 	if(stak.length != 1) throw {error: "semantic", text: text}
 	return stak.pop();
 }
-export { rule, parse, defer };
+export { rule, parse, parseAll, defer };

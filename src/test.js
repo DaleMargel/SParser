@@ -1,9 +1,12 @@
 import {parse,rule} from './sparser.js';
 
 let fails = 0;
+let flag="";
+
 function test(result){
 	if(!result) fails++;
 }
+
 console.log("Begin test");
 
 // test that string sequences can be parsed
@@ -116,11 +119,26 @@ test(parse(rule`'abc':..`,'abcabcabc')); // 3 occurrences ok
 // test null match
 test(parse(rule`""`,"")); // null match on nothing (double quotes) ok
 test(parse(rule`''`,"")); // null match on nothing (single quotes) ok
+test(parse(rule``,"")); // null match empty ok
 test( !parse(rule`''`,"abc")); // null match on something bad
 test(parse(rule`'''abc'`,"abc")); // null match combined with something ok
 
+let empty;
 
-let flag="";
+flag="false";
+empty=rule``.on(()=>flag="true1");
+test(parse(rule`${empty}`,''));
+test(flag,"true1");
+
+flag="false";
+empty=rule`''`.on(()=>flag="true2");
+test(parse(rule`${empty}`,''));
+test(flag,"true2");
+
+flag="false";
+empty=rule`""`.on(()=>flag="true3");
+test(parse(rule`${empty}`,''));
+test(flag,"true3");
 
 // test some invalid rule sequences
 // these should throw an exception

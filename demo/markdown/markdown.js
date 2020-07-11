@@ -1,27 +1,24 @@
-import {parse,rule,defer} from '../../src/sparser.js';
+import {parseAll,rule,defer} from '../../src/sparser.js';
 
-const stak=[];
+let stak=[];
 let linkmap={};
 
 function pop(){ return stak.pop() }
 function push(x){ stak.push(x) }
 
 let allow=defer();
-let init=rule`''`.on(()=>push(''));
+let init=rule``.on(()=>push(''));
 
-let line; {
-	let init=rule`''`.on(()=>push(""));
+let line; { // text\n => text
+	let init=rule``.on(()=>push(""));
 	let step=rule`!<\n\r>*`.on(s=>push(pop()+s));
-	line=rule`${init}{${allow}|${step}}['\n']`;	
+	line=rule`${init}{${allow}|${step}}[<\n\r>]`;	
 }
-// <p> element can contain italic, bold, strike, code, links and images
-// and most of these have a few variants.
+let noline=rule` <\n\r>`.on(()=>push('\n'));
+
 let ptag; {
-	let init=rule`''`.on(()=>push("<p>"));
-	let step=rule`!<\n\r>*`.on(s=>push(pop()+s));
-	let finit=rule`''`.on(()=>push(`${pop()}</p>\n`));
-	ptag=rule`${init}{${allow}|${step}}${finit}['\n']`;
-	//ptag=rule`${init}${line}${finit}['\n']`;
+	let finit=rule``.on(()=>push(`<p>${pop()}</p>\n`));
+	ptag=rule`${line}${finit}['\n']`;
 }
 let italic1; {
 	const step=rule`!'*'*`.on(s=>push(pop()+s));
@@ -50,29 +47,29 @@ let code; {
 }
 let style=rule`${bold1}|${bold2}|${italic1}|${italic2}|${strike}|${code}`;
 
-let link; {
+let link; { // [text](url)
 	const tag=rule`{!']'*}`.ons(s=>push(s));
 	const url=rule`{!<)" >*}`.ons(s=>push(s));
 	const tool=rule`{!'"'*}`.ons(s=>push(s));
-	const notool=rule`''`.on(()=>push(''));
+	const notool=rule``.on(()=>push(''));
 	
 	link=rule`'['${tag}']('${url} ('"'${tool}'"'|${notool})')'`.on(()=>{
 		let [a,b,c]=stak.splice(-3);
 		let title = c=='' ? '' : ` title="${c}"`;
 		push(`<a href="${b}"${title}>${a}</a>`) });
 }
-let img; {
+let img; { // ![text](url)
 	const tag=rule`{!']'*}`.ons(s=>push(s));
 	const url=rule`{!<)" >*}`.ons(s=>push(s));
 	const tool=rule`{!'"'*}`.ons(s=>push(s));
-	const notool=rule`''`.on(()=>push(''));
+	const notool=rule``.on(()=>push(''));
 	
 	img=rule`'!['${tag}']('${url} ('"'${tool}'"'|${notool})')'`.on(()=>{
 		let [a,b,c]=stak.splice(-3);
 		let title = c=='' ? '' : ` title="${c}"`;
 		push(`<img alt="${a}" src="${b}"${title}>`) });
 }
-let reflink; {
+let reflink; { // [text][ref]
 	const tag=rule`{!']'*}`.ons(s=>push(s));
 	const link=rule`{!']'*}`.ons(s=>push(s.toLowerCase()));
 	
@@ -83,7 +80,7 @@ let reflink; {
 		let title = ref && ref.title ? ` title="${ref.title}"` : '';
 		push(`<a${href}${title}>${a}</a>`) });
 }
-let refimg; {
+let refimg; { // ![text][ref]
 	const tag=rule`{!']'*}`.ons(s=>push(s));
 	const link=rule`{!']'*}`.ons(s=>push(s));
 	
@@ -100,11 +97,12 @@ allow.set(rule`${style}|${links}`.on(()=>{
 	let [a,b]=stak.splice(-2);
 	push(''+a+b) }));
 
-let ref; {
+
+let ref; { // [ref]:url
 	const key=rule`{!']'*}`.ons(s=>push(s));
 	const link=rule`{!< "\n>*}`.ons(s=>push(s));
 	const title=rule`{!'"'*}`.ons(s=>push(s));
-	const notitle=rule`''`.on(()=>push(false));
+	const notitle=rule``.on(()=>push(false));
 
 	ref=rule`'['${key}']:' ${link} ('"'${title}'"'|${notitle})`.on(()=>{
 		let [key,link,title]=stak.splice(-3);
@@ -115,15 +113,15 @@ let ref; {
 
 let head; {
 	let n=0;
-	const init=rule`''`.on(()=>n=0);
-	const step=rule`''`.on(()=>n++);
+	const init=rule``.on(()=>n=0);
+	const step=rule``.on(()=>n++);
 	const headn=rule`${init}((${step}'#'):1..6){' '}${line}`.on(()=>push(`<h${n}>${pop()}</h${n}>\n`));
 	const head1=rule`${line}('=':3..)['\n']`.on(()=>push(`<h1>${pop()}</h1>\n`));
 	const head2=rule`${line}('-':3..)['\n']`.on(()=>push(`<h2>${pop()}</h2>\n`));
 	head=rule`${headn}|${head1}|${head2}`;
 }
 let ul; {
-	const finit=rule`''`.on(()=>push(`<ul>\n${pop()}</ul>\n`));
+	const finit=rule``.on(()=>push(`<ul>\n${pop()}</ul>\n`));
 	const step=rule`'- '${line}`.on(()=>{
 		let [a,b]=stak.splice(-2);
 		push(`${a}<li>${b}</li>\n`)
@@ -131,7 +129,7 @@ let ul; {
 	ul=rule`${init}{${step}}${finit}`;
 }
 let ol; {
-	const finit=rule`''`.on(()=>push(`<ol>\n${pop()}</ol>\n`));
+	const finit=rule``.on(()=>push(`<ol>\n${pop()}</ol>\n`));
 	const step=rule`{<0..9>}'. '${line}`.on(()=>{
 		let [a,b]=stak.splice(-2);
 		push(`${a}<li>${b}</li>\n`);
@@ -141,7 +139,7 @@ let ol; {
 let list=rule`${ul}|${ol}`;
 
 let tabfence; {
-	const sp=rule`' ':4|'\t'`;
+	const sp=rule`' ':4|'\t'|(' ':..3'\t')`;
 	const init=rule`!!${sp}`.on(()=>push("<pre><code>"));
 	const step=rule`{!'\n'*}['\n']`.on(s=>push(`${pop()}${s}`));
 	const finit=rule`''`.on(()=>push(`${pop()}</code></pre>\n`));
@@ -164,7 +162,7 @@ let table; {
 	let index=0;
 	let len=0;
 
-	let init=rule`''`.on(()=>{ headers=[]; justs=[]; index=0 });
+	let init=rule``.on(()=>{ headers=[]; justs=[]; index=0 });
 
 	let th=rule`{!<|\n>*}`.ons(s=>headers.push(s.trim()));
 	let head=rule`['|']{${th}['|']}['\n']`;
@@ -175,7 +173,7 @@ let table; {
 	let tu=rule`${wide}|${right}|${left}`;
 	let just=rule`['|']{${tu}['|']}['\n']`;
 
-	let start=rule`''`.on(()=>{
+	let start=rule``.on(()=>{
 		len=headers.length;
 		let str='<table>\n<tr>\n';
 		for(let i=0; i<len; i++)
@@ -184,20 +182,23 @@ let table; {
 		push(str);
 	});
 
-	let tr=rule`''`.on(()=>{ push(`${pop()}<tr>\n`) });
-	let ntr=rule`''`.on(()=>{ push(`${pop()}</tr>\n`) });
+	let tr=rule``.on(()=>{ push(`${pop()}<tr>\n`) });
+	let ntr=rule``.on(()=>{ push(`${pop()}</tr>\n`) });
 
 	let td=rule`{!<|\n>*}`.ons(s=>{
 		let n = index++ % len;
 		push(`${pop()}<td${justs[n]}>${s.trim()}</td>\n`);
 	});
 	let row=rule`['|']${tr}{${td}['|']}${ntr}['\n']`;
-	let finit=rule`''`.on(()=>push(`${pop()}</table>\n`));
+	let finit=rule``.on(()=>push(`${pop()}</table>\n`));
 	table=rule`${init}${head}${just}${start}{${row}}${finit}`;
 }
 
 let blok=rule`${head}|${list}|${fence}|${bquote}|${hr}|${table}`;
-let all=rule`${blok}|${ptag}`;
-function md(txt){ return parse(all,txt) && stak.length==1 && stak.pop() }
+let all=rule`${noline}|${blok}|${ptag}`;
 
-export { md as read };
+function md(txt){
+	stak=[];
+	return (parseAll(all,txt)) ? stak.join('') : false;
+}
+export { md };

@@ -94,7 +94,8 @@ Here is how to use them (A,B,C reprent arbitrary rule expressions)
 | \<a..z\> | match a character from `a` to `z` inclusive | |
 | \<abc\> | match `a` or `b` or  `c` | |
 | 'abc' | match the string `abc` | single and double quotes ok if not mixed |
-| '' | null match | always succeeds, consumes no input |
+| '' | null match | consumes no input, always runs on() or ons() handler  |
+| | empty match | consumes no input, always runs on() or ons() handler  |
 | * | matches any character | |
 | A B | match spaces/tabs between `A` and `B` | 0 or more spaces and tabs matched |
 | {A} | match 1 or more occurences of `A` | |
